@@ -12,6 +12,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_library(elsim_core
     src/core/FakeCpu.cpp
     src/core/MemoryBus.cpp
+    src/core/Simulator.cpp
 )
 
 target_include_directories(elsim_core
@@ -25,6 +26,15 @@ add_executable(basic_memory_test
 )
 
 target_link_libraries(basic_memory_test
+    PRIVATE
+        elsim_core
+)
+
+add_executable(simulator_smoke_test
+    examples/simulator_smoke_test.cpp
+)
+
+target_link_libraries(simulator_smoke_test
     PRIVATE
         elsim_core
 )
