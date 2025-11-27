@@ -5,7 +5,7 @@
 #include <ostream>
 
 // Forward declarations, щоб не тягнути зайві залежності в заголовок.
-namespace elsim::cpu {
+namespace elsim::core {
 class ICpu;
 }
 
@@ -33,7 +33,7 @@ class Simulator {
      * @param devices  Колекція пристроїв, яка вміє виконувати tickAll().
      * @param log      Потік для логування (за замовчуванням std::cout).
      */
-    Simulator(cpu::ICpu& cpu, device::IDevicesTickable& devices, std::ostream& log = std::cout);
+    Simulator(ICpu& cpu, device::IDevicesTickable& devices, std::ostream& log = std::cout);
 
     /**
      * @brief Запускає цикл симуляції.
@@ -67,7 +67,7 @@ class Simulator {
     [[nodiscard]] std::uint64_t cycleCount() const noexcept;
 
    private:
-    cpu::ICpu& cpu_;
+    ICpu& cpu_;
     device::IDevicesTickable& devices_;
     std::ostream& log_;
 
