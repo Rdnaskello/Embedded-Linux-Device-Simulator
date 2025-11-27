@@ -1,0 +1,6 @@
+BasedOnStyle: Google      # яку базу беремо
+IndentWidth: 4            # скільки пробілів в одному відступі
+TabWidth: 4
+UseTab: Never             # таби чи пробіли
+ColumnLimit: 120          # максимальна довжина рядка
+PointerAlignment: Left    # "int* p" vs "int *p"
