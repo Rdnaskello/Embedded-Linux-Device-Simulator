@@ -1,0 +1,16 @@
+Checks: >
+  -*,
+  clang-analyzer-*,
+  bugprone-*,
+  modernize-*,
+  readability-*,
+  performance-*
+
+WarningsAsErrors: >
+  clang-analyzer-*,
+  bugprone-*
+
+HeaderFilterRegex: '^(src|include)/'
+
+AnalyzeTemporaryDtors: false
+FormatStyle: none
