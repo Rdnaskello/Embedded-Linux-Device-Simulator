@@ -38,3 +38,15 @@ target_link_libraries(simulator_smoke_test
     PRIVATE
         elsim_core
 )
+
+# CLI executable: elsim
+add_executable(elsim
+    src/cli/main.cpp
+)
+
+target_link_libraries(elsim
+    PRIVATE
+        elsim_core
+)
+
+target_compile_features(elsim PRIVATE cxx_std_20)
