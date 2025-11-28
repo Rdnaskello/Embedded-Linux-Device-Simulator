@@ -1,6 +1,9 @@
 #include "elsim/core/Simulator.hpp"
 
+#include <string>
+
 #include "elsim/core/ICpu.hpp"
+#include "elsim/core/Logger.hpp"
 #include "elsim/device/IDevicesTickable.hpp"
 
 namespace elsim::core {
@@ -10,17 +13,20 @@ Simulator::Simulator(ICpu& cpu, device::IDevicesTickable& devices, std::ostream&
 
 void Simulator::start(std::uint64_t maxCycles) {
     if (running_) {
-        log_ << "[SIM] start() called, but simulation is already running.\n";
+        Logger::instance().error("Simulator", "start() called, but simulation is already running.");
         return;
     }
 
     running_ = true;
 
-    log_ << "[SIM] Starting simulation";
+    // Формуємо повідомлення про старт
+    std::string msg = "Starting simulation";
     if (maxCycles != 0) {
-        log_ << " for max " << maxCycles << " cycles";
+        msg += " for max " + std::to_string(maxCycles) + " cycles";
     }
-    log_ << "...\n";
+    msg += "...";
+
+    Logger::instance().info("Simulator", msg);
 
     const std::uint64_t startCycle = cycleCount_;
 
@@ -30,19 +36,21 @@ void Simulator::start(std::uint64_t maxCycles) {
 
     const std::uint64_t executed = cycleCount_ - startCycle;
 
-    log_ << "[SIM] Simulation finished. Executed " << executed << " cycles, total cycleCount = " << cycleCount_
-         << ".\n";
+    std::string finishedMsg = "Simulation finished. Executed " + std::to_string(executed) +
+                              " cycles, total cycleCount = " + std::to_string(cycleCount_) + ".";
+
+    Logger::instance().info("Simulator", finishedMsg);
 
     running_ = false;
 }
 
 void Simulator::stop() {
     if (!running_) {
-        log_ << "[SIM] stop() called, but simulation is not running.\n";
+        Logger::instance().error("Simulator", "stop() called, but simulation is not running.");
         return;
     }
 
-    log_ << "[SIM] Stop requested.\n";
+    Logger::instance().info("Simulator", "Stop requested.");
     running_ = false;
 }
 
