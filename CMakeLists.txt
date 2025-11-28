@@ -13,6 +13,7 @@ add_library(elsim_core
     src/core/FakeCpu.cpp
     src/core/MemoryBus.cpp
     src/core/Simulator.cpp
+    src/core/Logger.cpp
 )
 
 target_include_directories(elsim_core
