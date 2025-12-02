@@ -18,6 +18,9 @@ add_library(elsim_core
     src/core/Simulator.cpp
     src/core/Logger.cpp
     src/core/BoardConfigParser.cpp
+    src/device/DeviceFactory.cpp
+    src/device/UartDevice.cpp
+    src/device/TimerDevice.cpp
 )
 
 target_include_directories(elsim_core
