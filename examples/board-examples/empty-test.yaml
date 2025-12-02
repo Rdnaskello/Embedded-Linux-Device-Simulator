@@ -1,0 +1,19 @@
+schema_version: 1
+
+board:
+  name: empty-board
+  description: Board with RAM and CPU, but no devices
+
+  cpu:
+    type: test-cpu
+    arch: test
+    frequency_hz: 1000000
+    entry_point: "0x00000000"
+
+  memory:
+    - name: sram0
+      type: ram
+      base: "0x00000000"
+      size: 2048
+
+  devices: []
