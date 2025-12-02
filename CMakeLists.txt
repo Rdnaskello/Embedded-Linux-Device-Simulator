@@ -8,17 +8,26 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Знаходимо yaml-cpp (потрібен для парсера board.yaml)
+find_package(yaml-cpp REQUIRED)
+
 # Core engine library (CPU etc.)
 add_library(elsim_core
     src/core/FakeCpu.cpp
     src/core/MemoryBus.cpp
     src/core/Simulator.cpp
     src/core/Logger.cpp
+    src/core/BoardConfigParser.cpp
 )
 
 target_include_directories(elsim_core
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(elsim_core
+    PUBLIC
+        yaml-cpp
 )
 
 # Example: basic memory bus smoke test
