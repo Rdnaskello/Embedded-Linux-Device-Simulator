@@ -1,10 +1,13 @@
+#include <yaml-cpp/yaml.h>
+
 #include <filesystem>
-#include <fstream>
 #include <iostream>
 #include <optional>
 #include <string>
 #include <string_view>
 
+#include "elsim/core/BoardConfigParser.hpp"
+#include "elsim/core/BoardDescription.hpp"
 #include "elsim/core/ICpu.hpp"
 #include "elsim/core/Logger.hpp"
 #include "elsim/core/Simulator.hpp"
@@ -89,12 +92,44 @@ std::optional<LogLevel> parse_log_level(std::string_view value) {
     return std::nullopt;
 }
 
+namespace {
+
+// Завантажуємо та валідовуємо board-конфіг, або завершуємо процес з помилкою.
+elsim::core::BoardDescription loadBoardConfigOrExit(const fs::path& configPath) {
+    auto& logger = Logger::instance();
+
+    logger.info("CLI", "[elsim] Using config: " + configPath.string());
+
+    try {
+        auto board = elsim::core::BoardConfigParser::loadFromFile(configPath.string());
+        logger.info("CLI", "[elsim] Board config loaded successfully. Name: " + board.name);
+        return board;
+    } catch (const YAML::Exception& ex) {
+        logger.error("CLI",
+                     std::string("[elsim] Failed to parse YAML config '") + configPath.string() + "': " + ex.what());
+        std::cerr << "Failed to parse YAML config '" << configPath << "': " << ex.what() << "\n";
+        std::exit(1);
+    } catch (const elsim::core::BoardConfigException& ex) {
+        logger.error("CLI",
+                     std::string("[elsim] Invalid board configuration in '") + configPath.string() + "': " + ex.what());
+        std::cerr << "Invalid board configuration in '" << configPath << "': " << ex.what() << "\n";
+        std::exit(1);
+    } catch (const std::exception& ex) {
+        logger.error("CLI", std::string("[elsim] Unexpected error while loading config '") + configPath.string() +
+                                "': " + ex.what());
+        std::cerr << "Unexpected error while loading config '" << configPath << "': " << ex.what() << "\n";
+        std::exit(1);
+    }
+}
+
+}  // namespace
+
 int main(int argc, char** argv) {
     fs::path configPath;
     bool hasConfig = false;
 
     LogLevel logLevel = LogLevel::Info;  // дефолтний рівень
-    bool dryRun = false;                 // NEW: режим dry-run
+    bool dryRun = false;                 // режим dry-run
 
     // Простий ручний парсинг аргументів:
     // очікуємо:
@@ -121,12 +156,12 @@ int main(int argc, char** argv) {
                 return 1;
             }
             logLevel = *lvl;
-        } else if (arg == "--dry-run") {  // NEW
+        } else if (arg == "--dry-run") {
             dryRun = true;
         } else {
             std::cerr << "Unknown argument: " << arg << "\n";
             std::cerr << "Usage: " << argv[0] << " --config <path-to-config.yaml>"
-                      << " [--log-level <debug|info|error|off>]" << " [--dry-run]\n";  // CHANGED
+                      << " [--log-level <debug|info|error|off>]" << " [--dry-run]\n";
             return 1;
         }
     }
@@ -134,7 +169,7 @@ int main(int argc, char** argv) {
     if (!hasConfig) {
         std::cerr << "Missing required --config argument\n";
         std::cerr << "Usage: " << argv[0] << " --config <path-to-config.yaml>"
-                  << " [--log-level <debug|info|error|off>]" << " [--dry-run]\n";  // CHANGED
+                  << " [--log-level <debug|info|error|off>]" << " [--dry-run]\n";
         return 1;
     }
 
@@ -148,38 +183,33 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    std::ifstream in(configPath);
-    if (!in) {
-        Logger::instance().error("CLI", "Failed to open config file: " + configPath.string());
-        std::cerr << "Failed to open config file: " << configPath << "\n";
-        return 1;
-    }
-
-    std::string configContent((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
-
-    Logger::instance().info("CLI", "[elsim] Using config: " + configPath.string());
-    Logger::instance().debug("CLI", "[elsim] Config size: " + std::to_string(configContent.size()) + " bytes");
-
-    // NEW: dry-run режим — перевіряємо, що все ок, але симуляцію не запускаємо
+    // NEW: dry-run режим — тепер реально парсимо YAML і перевіряємо BoardDescription
     if (dryRun) {
         Logger::instance().info("CLI",
-                                "[elsim] Dry-run mode: configuration file loaded successfully. "
+                                "[elsim] Dry-run mode: configuration file will be validated. "
                                 "Simulator will NOT be started.");
 
-        // Мінімальна перевірка готовності системи:
-        // пробуємо створити Simulator з тестовими CPU та Devices.
+        // 1. Завантажити і провалідувати конфіг
+        auto board = loadBoardConfigOrExit(configPath);
+
+        // (Опційно) мінімальний smoke-тест, що Simulator взагалі може створитись.
         try {
             elsim::cli::TestCpu cpu;
             elsim::cli::TestDevices dev;
 
             elsim::core::Simulator sim(cpu, dev);
 
-            Logger::instance().info("CLI", "[elsim] Dry-run successful: Simulator constructed correctly.");
+            Logger::instance().debug("CLI", "[elsim] Board has " + std::to_string(board.memory.size()) +
+                                                " memory regions and " + std::to_string(board.devices.size()) +
+                                                " devices.");
+
+            Logger::instance().info("CLI",
+                                    "[elsim] Dry-run successful: configuration file is valid. "
+                                    "Simulator constructed correctly.");
             return 0;
         } catch (const std::exception& ex) {
-            Logger::instance().error("CLI", std::string("[elsim] Dry-run failed while constructing "
-                                                        "Simulator: ") +
-                                                ex.what());
+            Logger::instance().error("CLI",
+                                     std::string("[elsim] Dry-run failed while constructing Simulator: ") + ex.what());
             return 1;
         } catch (...) {
             Logger::instance().error("CLI", "[elsim] Dry-run failed: unknown error during Simulator construction.");
@@ -187,6 +217,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    // Тут поки просто викликаємо заглушку (smoke-тест симулятора).
+    // Поки що, коли не dry-run, просто запускаємо smoke-тест симулятора.
+    // Наступні таски під'єднають сюди реальну ініціалізацію з BoardDescription.
     return elsim::cli::run_default_simulation();
 }
