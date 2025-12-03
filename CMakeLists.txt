@@ -65,6 +65,16 @@ target_link_libraries(simulator_smoke_test
         elsim_core
 )
 
+# Example: UART smoke test
+add_executable(uart_smoke_test
+    examples/uart_smoke_test.cpp
+)
+
+target_link_libraries(uart_smoke_test
+    PRIVATE
+        elsim_core
+)
+
 # CLI executable: elsim
 add_executable(elsim
     src/cli/main.cpp
