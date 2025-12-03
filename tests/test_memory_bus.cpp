@@ -1,1 +1,1 @@
-// TODO: implemented in TASK-2.x (GoogleTest)
+// Placeholder: MemoryBus unit tests (GoogleTest) will be added in a future release.
