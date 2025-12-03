@@ -3,8 +3,11 @@
 #include <limits>
 
 #include "elsim/core/BoardDescription.hpp"
+#include "elsim/core/DeviceMemoryAdapter.hpp"
 #include "elsim/core/FakeCpu.hpp"
+#include "elsim/core/MemoryBusAdapter.hpp"
 #include "elsim/device/DeviceFactory.hpp"  // знадобиться пізніше в loadBoard
+
 namespace elsim::core {
 
 Simulator::Simulator(std::ostream& log)
@@ -79,6 +82,16 @@ void Simulator::loadBoard(const BoardDescription& board) {
     memoryBus_ = std::make_unique<MemoryBus>(ramSize);
     log_ << "[Simulator] Created MemoryBus with RAM size " << ramSize << " bytes\n";
 
+    // --- Підключаємо MemoryBus до CPU через адаптер ---
+    if (!cpu_) {
+        throw std::runtime_error("Simulator::loadBoard: CPU is not initialized");
+    }
+
+    // Створюємо адаптер, який реалізує IMemoryBus для CPU.
+    auto busAdapter = std::make_shared<MemoryBusAdapter>(memoryBus_.get());
+    cpu_->setMemoryBus(busAdapter);
+    log_ << "[Simulator] Connected CPU to MemoryBus via MemoryBusAdapter\n";
+
     // --- Логування пам'яті (для дебагу карти) ---
     log_ << "[Simulator] Memory regions: " << board.memory.size() << "\n";
     for (const auto& region : board.memory) {
@@ -128,6 +141,36 @@ void Simulator::loadBoard(const BoardDescription& board) {
 
         // TODO: коли буде готовий MemoryBus API для MMIO,
         //       тут зареєструємо пристрій як MMIO-регіон через mapDevice().
+        // --- Пошук MMIO-регіону для цього девайса ---
+        std::uint32_t mmioSize = 0;
+        for (const auto& region : board.memory) {
+            if (region.type == MemoryType::Mmio && region.baseAddress == devDesc.baseAddress) {
+                if (region.sizeBytes == 0) {
+                    throw std::runtime_error("MMIO region '" + region.name + "' for device '" + devDesc.name +
+                                             "' has zero size");
+                }
+                if (region.sizeBytes > std::numeric_limits<std::uint32_t>::max()) {
+                    throw std::runtime_error("MMIO region '" + region.name +
+                                             "' size does not fit into 32-bit for device '" + devDesc.name + "'");
+                }
+
+                mmioSize = static_cast<std::uint32_t>(region.sizeBytes);
+                break;
+            }
+        }
+        if (mmioSize == 0) {
+            // Немає відповідного MMIO-регіону — просто попереджаємо й не мапимо.
+            log_ << "[Simulator] WARNING: No MMIO region found for device '" << devDesc.name << "' at base 0x"
+                 << std::hex << devDesc.baseAddress << std::dec << " — device will not be memory-mapped.\n";
+            continue;
+        }
+
+        // --- Мапимо девайс у MemoryBus через DeviceMemoryAdapter ---
+        auto* devicePtr = devices_.back().get();
+        auto mmioAdapter = std::make_shared<DeviceMemoryAdapter>(devicePtr);
+        memoryBus_->mapDevice(static_cast<std::uint32_t>(devDesc.baseAddress), mmioSize, mmioAdapter);
+        log_ << "[Simulator] Mapped device '" << devDesc.name << "' to MMIO region @ 0x" << std::hex
+             << devDesc.baseAddress << std::dec << " size " << mmioSize << " bytes\n";
     }
 
     log_ << "[Simulator] Board loaded successfully " << "(CPU created, MemoryBus created, devices instantiated; "
@@ -166,8 +209,15 @@ void Simulator::runOneTick() {
         return;
     }
 
-    // Поки тільки CPU — тіку пристроїв додамо окремою таскою.
+    // 1. CPU step
     cpu_->step();
+
+    // 2. Tick all devices
+    for (auto& dev : devices_) {
+        if (dev) {
+            dev->tick();
+        }
+    }
 
     ++cycleCount_;
 }

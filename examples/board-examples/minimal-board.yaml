@@ -16,6 +16,11 @@ board:
       base: "0x00000000"
       size: 65536         # 64 KiB RAM
 
+    - name: "timer0_mmio"
+      type: "mmio"
+      base: 0x40000000
+      size: 256   # або 0x100
+
   devices:
     - name: timer0
       type: timer
