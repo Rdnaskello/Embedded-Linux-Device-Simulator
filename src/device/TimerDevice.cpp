@@ -22,24 +22,40 @@ TimerDevice::TimerDevice(std::uint32_t baseAddress, std::uint32_t logPeriod)
 std::uint8_t TimerDevice::read(std::uint32_t offset) {
     auto& logger = core::Logger::instance();
 
+    std::uint8_t value = 0xFF;
+    bool valid = true;
+
     switch (offset) {
         // COUNTER — 32-бітне значення, розбите на 4 байти (little-endian)
         case REG_COUNTER:
-            return static_cast<std::uint8_t>((m_counter >> 0) & 0xFF);
+            value = static_cast<std::uint8_t>((m_counter >> 0) & 0xFF);
+            break;
         case REG_COUNTER + 1:
-            return static_cast<std::uint8_t>((m_counter >> 8) & 0xFF);
+            value = static_cast<std::uint8_t>((m_counter >> 8) & 0xFF);
+            break;
         case REG_COUNTER + 2:
-            return static_cast<std::uint8_t>((m_counter >> 16) & 0xFF);
+            value = static_cast<std::uint8_t>((m_counter >> 16) & 0xFF);
+            break;
         case REG_COUNTER + 3:
-            return static_cast<std::uint8_t>((m_counter >> 24) & 0xFF);
+            value = static_cast<std::uint8_t>((m_counter >> 24) & 0xFF);
+            break;
 
         default: {
             char buf[64];
             std::snprintf(buf, sizeof(buf), "Invalid read offset 0x%X", offset);
-            logger.debug(COMPONENT, buf);
-            return 0xFF;
+            logger.warn(COMPONENT, buf);
+            valid = false;
+            break;
         }
     }
+
+    if (valid) {
+        char buf[64];
+        std::snprintf(buf, sizeof(buf), "READ offset=0x%X -> 0x%02X", offset, static_cast<unsigned int>(value));
+        logger.debug(COMPONENT, buf);
+    }
+
+    return value;
 }
 
 // ------------------------------------------------------------
@@ -50,21 +66,23 @@ void TimerDevice::write(std::uint32_t offset, std::uint8_t value) {
 
     switch (offset) {
         case REG_CONTROL: {
-            // Мінімальна семантика:
-            // - запис значення 1 у CONTROL скидає лічильник
             if (value == 1U) {
                 m_counter = 0;
-
-                logger.debug(COMPONENT, "Counter reset via CONTROL register");
+                logger.debug(COMPONENT, "CONTROL=1 -> counter reset");
+            } else {
+                char buf[64];
+                std::snprintf(buf, sizeof(buf), "WRITE CONTROL offset=0x%X value=0x%02X (ignored)", offset,
+                              static_cast<unsigned int>(value));
+                logger.debug(COMPONENT, buf);
             }
-            // Інші значення поки що ігноруємо
             break;
         }
 
         default: {
             char buf[64];
-            std::snprintf(buf, sizeof(buf), "Invalid write offset 0x%X", offset);
-            logger.debug(COMPONENT, buf);
+            std::snprintf(buf, sizeof(buf), "Invalid write offset 0x%X value=0x%02X", offset,
+                          static_cast<unsigned int>(value));
+            logger.warn(COMPONENT, buf);
             break;
         }
     }

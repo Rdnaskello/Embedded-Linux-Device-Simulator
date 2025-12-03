@@ -6,7 +6,7 @@
 
 namespace elsim::core {
 
-enum class LogLevel { Debug = 0, Info = 1, Error = 2, Off = 3 };
+enum class LogLevel { Debug = 0, Info = 1, Warn = 2, Error = 3, Off = 4 };
 
 class Logger {
    public:
@@ -23,6 +23,7 @@ class Logger {
     // Зручні обгортки
     void debug(std::string_view component, std::string_view message);
     void info(std::string_view component, std::string_view message);
+    void warn(std::string_view component, std::string_view message);
     void error(std::string_view component, std::string_view message);
 
    private:
