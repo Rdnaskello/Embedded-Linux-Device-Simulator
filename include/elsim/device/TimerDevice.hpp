@@ -3,33 +3,29 @@
 #include <cstdint>
 
 #include "BaseDevice.hpp"
+#include "elsim/core/Logger.hpp"
 
 namespace elsim {
 
 class TimerDevice : public BaseDevice {
    public:
-    TimerDevice(std::uint32_t baseAddress) : BaseDevice("Timer", baseAddress, RegisterSize) {}
+    static constexpr std::uint32_t RegisterSize = 8;  // COUNTER(4) + CONTROL(4)
 
-    // Карта регістрів таймера
+    // Адреси регістрів
     enum Registers : std::uint32_t {
-        REG_CURRENT = 0x00,  // поточне значення лічильника
-        REG_RELOAD = 0x04,   // період
-        REG_CONTROL = 0x08,  // біти: enable, irq_enable, mode
-        REG_STATUS = 0x0C,   // переповнення / ready
+        REG_COUNTER = 0x00,  // поточне значення лічильника (4 байти, R)
+        REG_CONTROL = 0x04   // керування / reset (W)
     };
 
-    static constexpr std::uint32_t RegisterSize = 0x10;
+    TimerDevice(std::uint32_t baseAddress, std::uint32_t logPeriod = 1000);
 
-    // Перевизначення методів
     std::uint8_t read(std::uint32_t offset) override;
     void write(std::uint32_t offset, std::uint8_t value) override;
     void tick() override;
 
    private:
-    // Пізніше тут буде внутрішня логіка:
-    //  - лічильник
-    //  - reload value
-    //  - control flags
+    std::uint32_t m_counter = 0;    // внутрішній лічильник тікiв
+    std::uint32_t m_logPeriod = 0;  // період логування, 0 = вимкнено
 };
 
 }  // namespace elsim
