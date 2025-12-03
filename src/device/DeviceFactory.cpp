@@ -2,6 +2,9 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstdio>
+#include <string>
+#include <string_view>
 
 #include "elsim/core/Logger.hpp"
 #include "elsim/device/TimerDevice.hpp"
@@ -28,10 +31,9 @@ IDevice* DeviceFactory::createDevice(const std::string& type, const std::string&
     if (normalizedType == "uart") {
         logger.info(COMPONENT, "Creating UART device: " + name);
         return new UartDevice(baseAddress);
-    }
-
-    if (normalizedType == "timer") {
+    } else if (normalizedType == "timer") {
         logger.info(COMPONENT, "Creating TIMER device: " + name);
+        // Використовуємо конструктор TimerDevice з дефолтним logPeriod
         return new TimerDevice(baseAddress);
     }
 

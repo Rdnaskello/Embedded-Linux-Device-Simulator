@@ -75,6 +75,16 @@ target_link_libraries(uart_smoke_test
         elsim_core
 )
 
+# Example: Timer device smoke test
+add_executable(timer_smoke_test
+    examples/timer_smoke_test.cpp
+)
+
+target_link_libraries(timer_smoke_test
+    PRIVATE
+        elsim_core
+)
+
 # CLI executable: elsim
 add_executable(elsim
     src/cli/main.cpp
