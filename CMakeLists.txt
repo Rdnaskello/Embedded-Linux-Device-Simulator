@@ -85,6 +85,15 @@ target_link_libraries(timer_smoke_test
         elsim_core
 )
 
+add_executable(uart_timer_demo
+    examples/uart-timer-demo/main.cpp
+)
+
+target_link_libraries(uart_timer_demo
+    PRIVATE
+        elsim_core
+)
+
 # CLI executable: elsim
 add_executable(elsim
     src/cli/main.cpp
