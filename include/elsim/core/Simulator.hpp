@@ -1,78 +1,52 @@
 #pragma once
 
 #include <cstdint>
+#include <iosfwd>
 #include <iostream>
-#include <ostream>
+#include <memory>
+#include <vector>
 
-// Forward declarations, щоб не тягнути зайві залежності в заголовок.
-namespace elsim::core {
-class ICpu;
-}
-
-namespace elsim::device {
-class IDevicesTickable;
-}
+#include "elsim/core/ICpu.hpp"
+#include "elsim/core/MemoryBus.hpp"
+#include "elsim/device/IDevice.hpp"
 
 namespace elsim::core {
+
+class BoardDescription;
 
 /**
  * @brief Головний цикл симуляції: виконує крок CPU та оновлює всі пристрої.
  *
- * Відповідає за:
- *  - координацію cpu.step() + devices.tickAll()
- *  - логіку start/stop
- *  - підрахунок кількості виконаних тактів
- *  - базове логування етапів симуляції
+ * Simulator сам створює CPU/RAM/пристрої
+ * на основі BoardDescription у методі loadBoard().
  */
 class Simulator {
    public:
-    /**
-     * @brief Створює симулятор.
-     *
-     * @param cpu      Посилання на CPU, який реалізує інтерфейс ICpu.
-     * @param devices  Колекція пристроїв, яка вміє виконувати tickAll().
-     * @param log      Потік для логування (за замовчуванням std::cout).
-     */
-    Simulator(ICpu& cpu, device::IDevicesTickable& devices, std::ostream& log = std::cout);
+    explicit Simulator(std::ostream& log = std::cout);
+    ~Simulator();
 
-    /**
-     * @brief Запускає цикл симуляції.
-     *
-     * @param maxCycles Максимальна кількість тактів симуляції.
-     *                  Якщо 0 — симуляція триває, поки не буде викликано stop().
-     */
+    /// Ініціалізує плату на основі опису: CPU, RAM, пристрої, MemoryBus (MMIO).
+    void loadBoard(const BoardDescription& board);
+
     void start(std::uint64_t maxCycles = 0);
-
-    /**
-     * @brief Просить зупинити симуляцію.
-     *
-     * Реальна зупинка відбудеться після завершення поточного такту в start().
-     */
     void stop();
-
-    /**
-     * @brief Виконує один логічний такт симуляції:
-     *        cpu.step() + devices.tickAll().
-     */
     void runOneTick();
 
-    /**
-     * @brief Чи зараз симуляція в стані "running".
-     */
     [[nodiscard]] bool isRunning() const noexcept;
-
-    /**
-     * @brief Повертає кількість виконаних тактів симуляції.
-     */
     [[nodiscard]] std::uint64_t cycleCount() const noexcept;
 
    private:
-    ICpu& cpu_;
-    device::IDevicesTickable& devices_;
+    // Логування
     std::ostream& log_;
 
+    // Стан симуляції
     bool running_{false};
     std::uint64_t cycleCount_{0};
+
+    // "Залізо" плати
+    std::unique_ptr<MemoryBus> memoryBus_;
+    std::unique_ptr<ICpu> cpu_;
+    std::vector<std::unique_ptr<elsim::IDevice>> devices_;
 };
 
 }  // namespace elsim::core

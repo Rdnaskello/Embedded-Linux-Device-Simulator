@@ -8,68 +8,10 @@
 
 #include "elsim/core/BoardConfigParser.hpp"
 #include "elsim/core/BoardDescription.hpp"
-#include "elsim/core/ICpu.hpp"
 #include "elsim/core/Logger.hpp"
 #include "elsim/core/Simulator.hpp"
-#include "elsim/device/IDevicesTickable.hpp"
 
 namespace fs = std::filesystem;
-
-namespace elsim::cli {
-
-// ---------------------------
-// Фейковий CPU, щоб тестувати Simulator
-// ---------------------------
-class TestCpu : public core::ICpu {
-   public:
-    int stepCount = 0;
-
-    void step() override { ++stepCount; }
-
-    void reset() override { stepCount = 0; }
-
-    bool loadImage(const std::string& /*path*/) override {
-        // Для цього smoke-тесту нам все одно, просто повернемо true
-        return true;
-    }
-
-    void setMemoryBus(std::shared_ptr<core::IMemoryBus> /*bus*/) override {
-        // У цьому тесті шину не використовуємо
-    }
-};
-
-// ---------------------------
-// Фейковий DeviceManager
-// ---------------------------
-class TestDevices : public device::IDevicesTickable {
-   public:
-    int tickCount = 0;
-
-    void tickAll() override { ++tickCount; }
-};
-
-int run_default_simulation() {
-    TestCpu cpu;
-    TestDevices dev;
-
-    core::Simulator sim(cpu, dev);
-
-    sim.start(5);  // запускаємо рівно 5 тiкiв
-
-    std::cout << "CPU stepCount = " << cpu.stepCount << "\n";
-    std::cout << "DEV tickCount = " << dev.tickCount << "\n";
-    std::cout << "sim.cycleCount() = " << sim.cycleCount() << "\n";
-
-    if (cpu.stepCount == 5 && dev.tickCount == 5 && sim.cycleCount() == 5) {
-        std::cout << "Simulator smoke test PASSED\n";
-        return 0;
-    } else {
-        std::cout << "Simulator smoke test FAILED\n";
-        return 1;
-    }
-}
-
-}  // namespace elsim::cli
 
 // ---- Глобальні using'и для логера ----
 using elsim::core::Logger;
@@ -183,41 +125,53 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    // NEW: dry-run режим — тепер реально парсимо YAML і перевіряємо BoardDescription
+    // 1. Завантажити і провалідувати конфіг (спільно для dry-run та normal mode)
+    auto board = loadBoardConfigOrExit(configPath);
+
     if (dryRun) {
         Logger::instance().info("CLI",
                                 "[elsim] Dry-run mode: configuration file will be validated. "
                                 "Simulator will NOT be started.");
 
-        // 1. Завантажити і провалідувати конфіг
-        auto board = loadBoardConfigOrExit(configPath);
-
-        // (Опційно) мінімальний smoke-тест, що Simulator взагалі може створитись.
         try {
-            elsim::cli::TestCpu cpu;
-            elsim::cli::TestDevices dev;
-
-            elsim::core::Simulator sim(cpu, dev);
-
-            Logger::instance().debug("CLI", "[elsim] Board has " + std::to_string(board.memory.size()) +
-                                                " memory regions and " + std::to_string(board.devices.size()) +
-                                                " devices.");
+            // Мінімальний smoke-тест: симулятор створюється та приймає board.
+            elsim::core::Simulator sim(std::cout);
+            sim.loadBoard(board);
 
             Logger::instance().info("CLI",
                                     "[elsim] Dry-run successful: configuration file is valid. "
-                                    "Simulator constructed correctly.");
+                                    "Simulator constructed and board loaded (no execution).");
             return 0;
         } catch (const std::exception& ex) {
-            Logger::instance().error("CLI",
-                                     std::string("[elsim] Dry-run failed while constructing Simulator: ") + ex.what());
+            Logger::instance().error(
+                "CLI",
+                std::string("[elsim] Dry-run failed while constructing Simulator or loading board: ") + ex.what());
             return 1;
         } catch (...) {
-            Logger::instance().error("CLI", "[elsim] Dry-run failed: unknown error during Simulator construction.");
+            Logger::instance().error(
+                "CLI", "[elsim] Dry-run failed: unknown error during Simulator construction or board loading.");
             return 1;
         }
     }
 
-    // Поки що, коли не dry-run, просто запускаємо smoke-тест симулятора.
-    // Наступні таски під'єднають сюди реальну ініціалізацію з BoardDescription.
-    return elsim::cli::run_default_simulation();
+    // Звичайний режим: створюємо симулятор, завантажуємо плату і запускаємо цикл
+    try {
+        elsim::core::Simulator sim(std::cout);
+        sim.loadBoard(board);
+
+        Logger::instance().info("CLI", "[elsim] Starting simulation...");
+        sim.start();  // 0 => поки не stop(), реал логіка буде в майбутніх тасках
+
+        Logger::instance().info("CLI",
+                                "[elsim] Simulation finished. Total cycles: " + std::to_string(sim.cycleCount()));
+        return 0;
+    } catch (const std::exception& ex) {
+        Logger::instance().error("CLI", std::string("[elsim] Simulation failed: ") + ex.what());
+        std::cerr << "Simulation failed: " << ex.what() << "\n";
+        return 1;
+    } catch (...) {
+        Logger::instance().error("CLI", "[elsim] Simulation failed: unknown error.");
+        std::cerr << "Simulation failed: unknown error\n";
+        return 1;
+    }
 }
