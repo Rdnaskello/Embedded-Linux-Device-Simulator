@@ -1,0 +1,1 @@
+#include "elsim/core/DeviceMemoryAdapter.hpp"

@@ -21,6 +21,8 @@ add_library(elsim_core
     src/device/DeviceFactory.cpp
     src/device/UartDevice.cpp
     src/device/TimerDevice.cpp
+    src/core/MemoryBusAdapter.cpp
+    src/core/DeviceMemoryAdapter.cpp
 )
 
 target_include_directories(elsim_core
@@ -43,6 +45,17 @@ target_link_libraries(basic_memory_test
         elsim_core
 )
 
+# Example: basic CPU memory test
+add_executable(basic_cpu_memory_test
+    examples/basic_cpu_memory_test.cpp
+)
+
+target_link_libraries(basic_cpu_memory_test
+    PRIVATE 
+        elsim_core
+)
+
+# Example: simulator smoke test
 add_executable(simulator_smoke_test
     examples/simulator_smoke_test.cpp
 )
