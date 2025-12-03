@@ -30,10 +30,16 @@ IDevice* DeviceFactory::createDevice(const std::string& type, const std::string&
 
     if (normalizedType == "uart") {
         logger.info(COMPONENT, "Creating UART device: " + name);
+        char buf[96];
+        std::snprintf(buf, sizeof(buf), "Created UART device '%s' at base=0x%08X", name.c_str(), baseAddress);
+        logger.debug(COMPONENT, buf);
         return new UartDevice(baseAddress);
     } else if (normalizedType == "timer") {
         logger.info(COMPONENT, "Creating TIMER device: " + name);
-        // Використовуємо конструктор TimerDevice з дефолтним logPeriod
+
+        char buf[96];
+        std::snprintf(buf, sizeof(buf), "Created TIMER device '%s' at base=0x%08X", name.c_str(), baseAddress);
+        logger.debug(COMPONENT, buf);
         return new TimerDevice(baseAddress);
     }
 

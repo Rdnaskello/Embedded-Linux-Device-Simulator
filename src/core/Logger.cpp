@@ -4,6 +4,29 @@
 
 namespace elsim::core {
 
+namespace {
+
+// ANSI кольори для різних рівнів логів.
+constexpr const char* kColorReset = "\033[0m";
+
+const char* color_for_level(LogLevel level) {
+    switch (level) {
+        case LogLevel::Debug:
+            return "\033[90m";  // сірий
+        case LogLevel::Info:
+            return "\033[32m";  // зелений
+        case LogLevel::Warn:
+            return "\033[33m";  // жовтий
+        case LogLevel::Error:
+            return "\033[31m";  // червоний
+        case LogLevel::Off:
+            return kColorReset;  // на всякий випадок
+    }
+    return kColorReset;
+}
+
+}  // namespace
+
 Logger::Logger()
     : current_level_(LogLevel::Info)  // дефолтний рівень — INFO
 {}
@@ -24,12 +47,17 @@ void Logger::log(LogLevel level, std::string_view component, std::string_view me
 
     std::lock_guard lock(mutex_);
 
-    std::clog << "[" << to_string(level) << "] " << "[" << component << "] " << message << std::endl;
+    const char* color = color_for_level(level);
+
+    std::clog << color << "[" << to_string(level) << "] " << "[" << component << "] " << message << kColorReset
+              << std::endl;
 }
 
 void Logger::debug(std::string_view component, std::string_view message) { log(LogLevel::Debug, component, message); }
 
 void Logger::info(std::string_view component, std::string_view message) { log(LogLevel::Info, component, message); }
+
+void Logger::warn(std::string_view component, std::string_view message) { log(LogLevel::Warn, component, message); }
 
 void Logger::error(std::string_view component, std::string_view message) { log(LogLevel::Error, component, message); }
 
@@ -43,6 +71,8 @@ std::string_view to_string(LogLevel level) {
             return "DEBUG";
         case LogLevel::Info:
             return "INFO";
+        case LogLevel::Warn:
+            return "WARN";
         case LogLevel::Error:
             return "ERROR";
         case LogLevel::Off:
