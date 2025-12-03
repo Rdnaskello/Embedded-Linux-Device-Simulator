@@ -112,10 +112,7 @@ void Simulator::loadBoard(const BoardDescription& board) {
              << std::dec << region.sizeBytes << " bytes\n";
     }
 
-    // TODO: у майбутньому тут будемо реєструвати ROM та MMIO-регіони
-    //       через mapDevice(...) і підключати їх до MemoryBus.
-    // TODO: коли з’явиться IMemoryBus, можна буде передати шину в CPU
-    //       (cpu_->setMemoryBus(...)).
+    // За потреби можна розширити API MemoryBus для складніших MMIO-пристроїв і регіонів.
 
     // --- Пристрої: створюємо через DeviceFactory ---
     log_ << "[Simulator] Devices: " << board.devices.size() << "\n";
@@ -139,7 +136,6 @@ void Simulator::loadBoard(const BoardDescription& board) {
 
         devices_.emplace_back(raw);
 
-        // TODO: коли буде готовий MemoryBus API для MMIO,
         //       тут зареєструємо пристрій як MMIO-регіон через mapDevice().
         // --- Пошук MMIO-регіону для цього девайса ---
         std::uint32_t mmioSize = 0;
