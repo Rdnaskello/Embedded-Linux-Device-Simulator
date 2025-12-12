@@ -100,6 +100,10 @@ class FakeCpu : public ICpu {
 
     // Абстрактна шина пам'яті
     std::shared_ptr<IMemoryBus> memoryBus_{};
+
+    // Допоміжні функції для роботи з 32-бітними словами в пам'яті (little-endian).
+    Register read32(std::uint32_t address);
+    void write32(std::uint32_t address, Register value);
 };
 
 }  // namespace elsim::core
