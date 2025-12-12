@@ -41,6 +41,12 @@ class FakeCpu : public ICpu {
     bool loadImage(const std::string& path) override;
     void setMemoryBus(std::shared_ptr<IMemoryBus> bus) override;
 
+    // Декодування та виконання однієї 32-бітної інструкції
+    void decodeAndExecute(std::uint32_t instruction);
+
+    // Перевірити, чи CPU перебуває в стані HALT
+    [[nodiscard]] bool isHalted() const noexcept { return halted_; }
+
     // --- Доступ до стану CPU (для майбутніх тестів / дебагу) ---
     [[nodiscard]] const CpuState& state() const noexcept { return state_; }
 
@@ -83,6 +89,14 @@ class FakeCpu : public ICpu {
     // Тимчасовий "старий" PC, який використовується існуючою step()-логікою.
     // Ми залишаємо його, щоб не ламати поточні smoke-тести (варіант A).
     std::uint32_t pc_{0};
+
+    // Статус HALT для нового виконуючого ядра
+    bool halted_{false};
+
+    // Хелпери для роботи з регістрами та прапорцями
+    Register readReg(std::size_t index) const;
+    void writeReg(std::size_t index, Register value);
+    void updateZNFlags(Register value);
 
     // Абстрактна шина пам'яті
     std::shared_ptr<IMemoryBus> memoryBus_{};
