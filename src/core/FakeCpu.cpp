@@ -57,6 +57,51 @@ void FakeCpu::updateZNFlags(Register value) {
     setFlag(Flag::Negative, signedValue < 0);
 }
 
+// --- Допоміжні функції роботи з пам'яттю (32-бітні слова) ---
+
+FakeCpu::Register FakeCpu::read32(std::uint32_t address) {
+    if (!memoryBus_) {
+        Logger::instance().warn("CPU", "read32 called without memoryBus attached");
+        return 0;
+    }
+
+    // Little-endian: молодший байт за найменшою адресою.
+    const std::uint32_t b0 = memoryBus_->read8(address + 0);
+    const std::uint32_t b1 = memoryBus_->read8(address + 1);
+    const std::uint32_t b2 = memoryBus_->read8(address + 2);
+    const std::uint32_t b3 = memoryBus_->read8(address + 3);
+
+    const std::uint32_t value = (b0) | (b1 << 8) | (b2 << 16) | (b3 << 24);
+
+    {
+        std::ostringstream oss;
+        oss << "FETCH32 addr=0x" << std::hex << address << " -> 0x" << value;
+        Logger::instance().debug("CPU", oss.str());
+    }
+
+    return static_cast<Register>(value);
+}
+
+void FakeCpu::write32(std::uint32_t address, Register value) {
+    if (!memoryBus_) {
+        Logger::instance().warn("CPU", "write32 called without memoryBus attached");
+        return;
+    }
+
+    const std::uint32_t v = static_cast<std::uint32_t>(value);
+
+    memoryBus_->write8(address + 0, static_cast<std::uint8_t>(v & 0xFFu));
+    memoryBus_->write8(address + 1, static_cast<std::uint8_t>((v >> 8) & 0xFFu));
+    memoryBus_->write8(address + 2, static_cast<std::uint8_t>((v >> 16) & 0xFFu));
+    memoryBus_->write8(address + 3, static_cast<std::uint8_t>((v >> 24) & 0xFFu));
+
+    {
+        std::ostringstream oss;
+        oss << "WRITE32 addr=0x" << std::hex << address << " value=0x" << v;
+        Logger::instance().debug("CPU", oss.str());
+    }
+}
+
 // --- Декодування та виконання інструкцій ---
 
 void FakeCpu::decodeAndExecute(std::uint32_t instruction) {
@@ -93,6 +138,12 @@ void FakeCpu::decodeAndExecute(std::uint32_t instruction) {
     constexpr std::uint8_t OPC_MOV = 0x01;
     constexpr std::uint8_t OPC_ADD = 0x02;
     constexpr std::uint8_t OPC_SUB = 0x03;
+    constexpr std::uint8_t OPC_LOAD = 0x04;
+    constexpr std::uint8_t OPC_STORE = 0x05;
+    // Стрибки додамо трохи пізніше:
+    constexpr std::uint8_t OPC_JMP = 0x06;
+    constexpr std::uint8_t OPC_JZ = 0x07;
+    constexpr std::uint8_t OPC_JNZ = 0x08;
     constexpr std::uint8_t OPC_HALT = 0xFF;
 
     switch (opcode) {
@@ -187,6 +238,147 @@ void FakeCpu::decodeAndExecute(std::uint32_t instruction) {
             break;
         }
 
+        case OPC_LOAD: {
+            // LOAD Rd, [Rs + imm16]
+            // EA = Rs + sign_extend(imm16)
+            // Rd = MEM32[EA]
+
+            const Register base = readReg(rsIndex);
+            const Register offset = signExtendImm16();
+            const std::uint32_t ea =
+                static_cast<std::uint32_t>(static_cast<std::uint32_t>(base) + static_cast<std::uint32_t>(offset));
+
+            const Register value = read32(ea);
+
+            {
+                std::ostringstream oss;
+                oss << "LOAD R" << rdIndex << ", [R" << rsIndex << " + " << imm16 << "] " << "(EA=0x" << std::hex << ea
+                    << ", value=0x" << value << ")";
+                Logger::instance().debug("CPU", oss.str());
+            }
+
+            writeReg(rdIndex, value);
+            // За ISA: LOAD оновлює Z/N, не чіпаючи Carry/Overflow
+            updateZNFlags(value);
+
+            // Звичайна інструкція → PC = PC + 4
+            state_.pc += 4;
+            break;
+        }
+
+        case OPC_STORE: {
+            // STORE Rs, [Rd + imm16]
+            // EA = Rd + sign_extend(imm16)
+            // MEM32[EA] = Rs
+
+            const Register base = readReg(rdIndex);   // база адресації
+            const Register value = readReg(rsIndex);  // значення для запису
+            const Register offset = signExtendImm16();
+
+            const std::uint32_t ea =
+                static_cast<std::uint32_t>(static_cast<std::uint32_t>(base) + static_cast<std::uint32_t>(offset));
+
+            write32(ea, value);
+
+            {
+                std::ostringstream oss;
+                oss << "STORE R" << rsIndex << " -> [R" << rdIndex << " + " << imm16 << "] " << "(EA=0x" << std::hex
+                    << ea << ", value=0x" << value << ")";
+                Logger::instance().debug("CPU", oss.str());
+            }
+
+            // За ISA: STORE не змінює FLAGS
+
+            state_.pc += 4;
+            break;
+        }
+
+        case OPC_JMP: {
+            // JMP offset16
+            // PC = PC + 4 + (sign_extend(offset16) << 2)
+
+            const std::int32_t offsetWords = static_cast<std::int32_t>(imm16);
+            const std::int32_t offsetBytes = offsetWords << 2;  // множимо на розмір інструкції (4 байти)
+
+            const std::uint32_t oldPc = state_.pc;
+            const std::uint32_t nextPc = oldPc + 4;
+            const std::uint32_t targetPc = static_cast<std::uint32_t>(static_cast<std::int32_t>(nextPc) + offsetBytes);
+
+            {
+                std::ostringstream oss;
+                oss << "JMP " << imm16 << " (words) " << "oldPC=0x" << std::hex << oldPc << " -> targetPC=0x"
+                    << targetPc;
+                Logger::instance().debug("CPU", oss.str());
+            }
+
+            state_.pc = targetPc;
+            break;
+        }
+
+        case OPC_JZ: {
+            // JZ offset16
+            // if Z == 1:
+            //     PC = PC + 4 + (sign_extend(offset16) << 2)
+            // else:
+            //     PC = PC + 4
+
+            const bool zSet = isFlagSet(Flag::Zero);
+
+            const std::int32_t offsetWords = static_cast<std::int32_t>(imm16);
+            const std::int32_t offsetBytes = offsetWords << 2;
+
+            const std::uint32_t oldPc = state_.pc;
+            const std::uint32_t nextPc = oldPc + 4;
+
+            std::uint32_t newPc = nextPc;
+
+            if (zSet) {
+                newPc = static_cast<std::uint32_t>(static_cast<std::int32_t>(nextPc) + offsetBytes);
+            }
+
+            {
+                std::ostringstream oss;
+                oss << "JZ " << imm16 << " (words), Z=" << (zSet ? 1 : 0) << " oldPC=0x" << std::hex << oldPc
+                    << " -> newPC=0x" << newPc << (zSet ? " (taken)" : " (not taken)");
+                Logger::instance().debug("CPU", oss.str());
+            }
+
+            state_.pc = newPc;
+            break;
+        }
+
+        case OPC_JNZ: {
+            // JNZ offset16
+            // if Z == 0:
+            //     PC = PC + 4 + (sign_extend(offset16) << 2)
+            // else:
+            //     PC = PC + 4
+
+            const bool zSet = isFlagSet(Flag::Zero);
+
+            const std::int32_t offsetWords = static_cast<std::int32_t>(imm16);
+            const std::int32_t offsetBytes = offsetWords << 2;
+
+            const std::uint32_t oldPc = state_.pc;
+            const std::uint32_t nextPc = oldPc + 4;
+
+            std::uint32_t newPc = nextPc;
+
+            if (!zSet) {
+                newPc = static_cast<std::uint32_t>(static_cast<std::int32_t>(nextPc) + offsetBytes);
+            }
+
+            {
+                std::ostringstream oss;
+                oss << "JNZ " << imm16 << " (words), Z=" << (zSet ? 1 : 0) << " oldPC=0x" << std::hex << oldPc
+                    << " -> newPC=0x" << newPc << (!zSet ? " (taken)" : " (not taken)");
+                Logger::instance().debug("CPU", oss.str());
+            }
+
+            state_.pc = newPc;
+            break;
+        }
+
         case OPC_HALT: {
             Logger::instance().debug("CPU", "HALT");
             // Переводимо CPU в стан HALT. PC залишаємо як є.
@@ -205,30 +397,34 @@ void FakeCpu::decodeAndExecute(std::uint32_t instruction) {
     }
 }
 
-// --- Основна логіка CPU (поки що стара, байтово-інкрементна) ---
+// --- Основна логіка CPUEDITOR CPU (нова, 32-бітна) ---
 
 void FakeCpu::step() {
     // Рахуємо кроки — це важливо для smoke-тестів
     ++stepCount_;
 
-    // Якщо шина пам'яті не підключена — поводимось як раніше (тільки лічимо)
-    if (!memoryBus_) {
+    // Якщо CPU вже зупинений — нічого не робимо
+    if (halted_) {
+        Logger::instance().debug("CPU", "step() called while HALTED — skipping");
         return;
     }
 
-    // Проста тестова логіка:
-    // 1. читаємо байт з адреси pc_
-    // 2. збільшуємо його на 1
-    // 3. записуємо назад
-    // 4. переходимо до наступної адреси
-    //
-    // ВАЖЛИВО: тут ми все ще використовуємо старий pc_,
-    // щоб не зламати існуючі smoke-тести (варіант A).
-    std::uint8_t value = memoryBus_->read8(pc_);
-    value = static_cast<std::uint8_t>(value + 1U);
-    memoryBus_->write8(pc_, value);
+    // Без підключеної шини пам'яті ми не можемо виконувати інструкції
+    if (!memoryBus_) {
+        Logger::instance().warn("CPU", "step() called without memoryBus attached");
+        return;
+    }
 
-    ++pc_;
+    // 1. Fetch: читаємо 32-бітну інструкцію з пам'яті за PC
+    const Register rawInstr = read32(state_.pc);
+    const std::uint32_t instruction = static_cast<std::uint32_t>(rawInstr);
+
+    // 2. Decode + Execute: передаємо інструкцію у decodeAndExecute()
+    decodeAndExecute(instruction);
+
+    // 3. Для сумісності тримаємо старе поле pc_ синхронізованим з архітектурним PC.
+    //    Пізніше його можна буде повністю прибрати.
+    pc_ = state_.pc;
 }
 
 void FakeCpu::reset() {
