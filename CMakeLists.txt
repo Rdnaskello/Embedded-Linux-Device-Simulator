@@ -94,6 +94,16 @@ target_link_libraries(uart_timer_demo
         elsim_core
 )
 
+# Example fakecpu decode test
+add_executable(fakecpu_decode_smoke_test
+    examples/fakecpu_decode_smoke_test.cpp
+)
+
+target_link_libraries(fakecpu_decode_smoke_test
+    PRIVATE
+        elsim_core
+)
+
 # CLI executable: elsim
 add_executable(elsim
     src/cli/main.cpp
