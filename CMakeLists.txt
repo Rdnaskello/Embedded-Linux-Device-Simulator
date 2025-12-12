@@ -125,3 +125,33 @@ target_link_libraries(elsim
 )
 
 target_compile_features(elsim PRIVATE cxx_std_20)
+
+# === Unit tests for FakeCPU core (TASK-6.6) ===
+
+include(FetchContent)
+
+FetchContent_Declare(
+    googletest
+    URL https://github.com/google/googletest/archive/refs/tags/v1.15.2.zip
+)
+
+# Для Windows/MSVC — уникнути конфлікту CRT
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+FetchContent_MakeAvailable(googletest)
+
+enable_testing()
+
+add_executable(cpu_tests
+    tests/test_fakecpu_core.cpp
+)
+
+target_link_libraries(cpu_tests
+    PRIVATE
+        elsim_core
+        GTest::gtest_main
+)
+
+include(GoogleTest)
+gtest_discover_tests(cpu_tests)
+
