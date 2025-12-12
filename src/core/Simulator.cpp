@@ -205,16 +205,24 @@ void Simulator::runOneTick() {
         return;
     }
 
-    // 1. CPU step
+    // 1. Дати CPU виконати один крок
     cpu_->step();
 
-    // 2. Tick all devices
+    // 2. Перевірити HALT
+    if (cpu_->isHalted()) {
+        log_ << "[Simulator] CPU entered HALT state. Stopping simulation.\n";
+        running_ = false;
+        return;  // Важливо: не оновлюємо девайси і не збільшуємо лічильник циклів
+    }
+
+    // 3. Оновити всі пристрої
     for (auto& dev : devices_) {
         if (dev) {
             dev->tick();
         }
     }
 
+    // 4. Збільшити кількість циклів
     ++cycleCount_;
 }
 

@@ -23,5 +23,8 @@ class ICpu {
 
     // Підключити шину пам'яті до CPU.
     virtual void setMemoryBus(std::shared_ptr<IMemoryBus> bus) = 0;
+
+    // Новий метод: чи знаходиться CPU у стані HALT
+    virtual bool isHalted() const noexcept = 0;
 };
 }  // namespace elsim::core
