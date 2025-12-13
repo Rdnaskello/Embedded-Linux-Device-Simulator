@@ -33,15 +33,12 @@ std::uint8_t UartDevice::read(std::uint32_t offset) {
 void UartDevice::write(std::uint32_t offset, std::uint8_t value) {
     auto& logger = core::Logger::instance();
 
-    // Minimal UART model:
-    // - Only offset 0 is treated as a TX register.
-    // - Writing a byte to offset 0 prints it to the host stdout and logs the event.
+    // Minimal UART model (word-write friendly):
+    // - offset 0 is TX register
+    // - offsets 1..3 can happen due to CPU word writes (WRITE32 -> 4x WRITE8)
+    // - ignore non-zero offsets silently to avoid log spam
 
     if (offset != 0U) {
-        char buf[64];
-        std::snprintf(buf, sizeof(buf), "WRITE to unsupported offset 0x%X value=0x%02X (ignored)", offset,
-                      static_cast<unsigned int>(value));
-        logger.warn(COMPONENT, buf);
         return;
     }
 
