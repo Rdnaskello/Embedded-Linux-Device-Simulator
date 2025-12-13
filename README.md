@@ -1,24 +1,34 @@
 # Embedded Linux Device Simulator
 
-Software simulator of embedded Linux devices with a modular architecture.  
-Designed for testing, prototyping, automation, and validating embedded interactions without physical hardware.
+Software simulator of embedded-style boards with a modular architecture (CPU + RAM + MMIO devices).
+Designed for testing, prototyping, automation, and validating device interactions without physical hardware.
+
 
 ---
 
-## Features in v0.1
+## Features in v0.2
 
-This is the **initial working prototype** of ELSIM (`v0.1`).  
-Current capabilities:
+ELSIM `v0.2` extends the initial simulator prototype with a minimal CPU execution model and a program loader.
 
 - **Core architecture**
-  - `ICpu` interface and CPU abstraction
-  - `IMemoryBus` and `MemoryBus` implementation
+  - `Simulator` orchestration (CPU + memory bus + devices)
+  - `ICpu` abstraction for pluggable CPU implementations
+  - `IMemoryBus` / `MemoryBus` with RAM and MMIO regions
   - `IMemoryMappedDevice` interface for MMIO devices
 
 - **Memory & MMIO**
   - Unified `MemoryBus` with RAM + MMIO regions
   - Device mapping by base address and size
   - Safe read/write access with logging for out-of-range operations
+
+- **Fake CPU**
+  - Minimal instruction set and CPU state (registers, PC, FLAGS)
+  - Instruction fetch/decode/execute loop
+  - Debug-level logging of executed instructions
+
+- **Program loading**
+  - Simple executable format: `elsim-bin` (header + code section)
+  - `ProgramLoader` that loads code into RAM and sets CPU entry point
 
 - **Devices**
   - **UART device**
@@ -30,65 +40,42 @@ Current capabilities:
     - Basic control register (enable/reset)
 
 - **Device factory**
-  - `DeviceFactory` that creates devices from board configuration
+  - `DeviceFactory` creates devices from board configuration
   - Automatic MMIO mapping for UART and Timer
 
-- **CLI interface**
+- **CLI**
   - `elsim` executable with:
     - `--config <path>` – load board configuration from YAML
+    - `--program <path>` – load `elsim-bin` program into RAM and start CPU execution
     - `--dry-run` – validate config and construct simulator without running it
     - `--log-level <DEBUG|INFO|WARN|ERROR>` – control logging verbosity
 
-- **Board configuration (YAML)**
-  - YAML-based description of:
-    - CPU
-    - RAM
-    - Devices (UART, Timer)
-    - MMIO mappings
-
-- **Logging system**
-  - Central logger with levels: `DEBUG`, `INFO`, `WARN`, `ERROR`
-  - Detailed messages for device operations and memory accesses
-
-- **Smoke tests & demos**
-  - `basic_memory_test` – validates RAM + MMIO reads/writes
-  - `basic_cpu_memory_test` – checks CPU ↔ MemoryBus interaction
-  - `simulator_smoke_test` – minimal simulator construction
-  - `uart_smoke_test` – UART device TX behavior
-  - `timer_smoke_test` – Timer ticks and control
-  - `uart_timer_demo` – combined UART + Timer example
+- **Examples & tests**
+  - Smoke tests for MemoryBus, devices, simulator wiring
+  - Demo board configs in `examples/board-examples/`
+  - Minimal hello-style demo program for Fake CPU
 
 ---
 
 ## How to Build
 
 ```bash
-mkdir build
+mkdir -p build
 cd build
 cmake ..
-make
+cmake --build .
 ```
-The main executable and examples will be located in:
+Binaries will be located in `build/`.
 
-```bash
-build/
-```
 ---
 
 ## Quick Start
-
+From the `build/` directory:  
 ### **1. Validate a minimal board configuration**
-
-From the `build/` directory:
 
 ```bash
 ./elsim --dry-run --config ../examples/board-examples/minimal-board.yaml
 ```
-You should see log messages indicating that:
-- the config is loaded,
-- the board is constructed,
-- the simulator can be created successfully.
-
 ### **2. Run core smoke tests**
 
 Still in `build/`:
@@ -98,69 +85,54 @@ Still in `build/`:
 ./basic_cpu_memory_test
 ./simulator_smoke_test
 ```
-These tests validate basic RAM, MMIO, and simulator wiring.
-
 ### **3. Run device smoke tests**
 
 ```bash
 ./uart_smoke_test
 ./timer_smoke_test
 ```
-You should see UART TX logging and Timer counter updates in the console.
-
-### **4. Run UART + Timer demo**
-
+### **4. Run Fake CPU demo program**
 ```bash
-./uart_timer_demo
+./elsim --config ../examples/board-examples/hello-board.yaml --program ../examples/hello.elsim-bin --log-level INFO
 ```
-This demo shows interaction between UART and Timer in a simple scenario (ticks, counter changes, and UART output logged to the console).
 
 ---
 
 ### **Project Structure**
 ```bash
 Embedded-Linux-Device-Simulator/
-├─ src/                      # Source files
+├─ src/
 │  ├─ core/                  # Simulator core (Simulator, MemoryBus, Logger, etc.)
 │  ├─ cli/                   # Command-line interface (elsim entry point)
+│  ├─ cpu/                   # CPU implementations (FakeCpu, etc.)
 │  └─ device/                # Device implementations (UART, Timer, DeviceFactory)
 │
-├─ include/                  # Public headers
+├─ include/
 │  └─ elsim/
-│     ├─ core/               # Core simulator interfaces & types (ICpu, IMemoryBus, IMemoryMappedDevice, Simulator)
-│     └─ device/             # Device interfaces and declarations
+│     ├─ core/
+│     ├─ cpu/
+│     └─ device/
 │
-├─ examples/                 # Smoke tests and demo programs
-│  ├─ basic_memory_test.cpp
-│  ├─ basic_cpu_memory_test.cpp
-│  ├─ simulator_smoke_test.cpp
-│  ├─ uart_smoke_test.cpp
-│  ├─ timer_smoke_test.cpp
-│  └─ uart-timer-demo/       # UART + Timer demo source and board config
+├─ examples/
+│  ├─ board-examples/        # YAML board configuration examples
+│  ├─ build_hello_program.cpp
+│  └─ hello.elsim-bin
 │
-├─ tests/                    # (Future) GoogleTest-based unit tests
-│  └─ test_memory_bus.cpp    # Placeholder for MemoryBus tests
-│
-├─ examples/board-examples/  # YAML board configuration examples
-│  └─ minimal-board.yaml
-│
-├─ CMakeLists.txt            # Main build configuration
-├─ README.md                 # Project documentation
-└─ CHANGELOG.md              # Release history (from v0.1)
+├─ CMakeLists.txt
+├─ README.md
+└─ CHANGELOG.md
 ```
 ### **Code Style**
-This project uses clang-format and clang-tidy to maintain consistent and high-quality C++ code style.
+This project uses clang-format and clang-tidy.
 
 ### clang-format
 
 Rules are stored in `.clang-format.`
 
-Format a file manually:
-
 ```bash
 clang-format -i path/to/file.cpp
 ```
-Or run it over the whole project (example):
+Example: format the whole project:
 
 ```bash
 clang-format -i $(find include src examples tests -name "*.hpp" -o -name "*.h" -o -name "*.cpp")
@@ -168,19 +140,15 @@ clang-format -i $(find include src examples tests -name "*.hpp" -o -name "*.h" -
 ### clang-tidy
 Configured via `.clang-tidy.`
 
-Run checks:
 
 ```bash
 clang-tidy path/to/file.cpp -- -I./include
 ```
 ---
-## Roadmap (v0.2 and beyond)
+## Roadmap (v0.3+)
 
 Planned improvements for future versions:
 
- - Extend device set (GPIO, virtual sensors, storage I/O)
- - Add TCP communication module for remote control / integration
- - Add configuration presets for common embedded boards
- - Improve test coverage with GoogleTest (tests/)
- - Add more detailed examples and documentation
- - Prepare v0.2 release
+- Extend the device set (GPIO, sensors, storage I/O)
+- Improve test coverage and CI automation
+- Add more detailed examples and documentation

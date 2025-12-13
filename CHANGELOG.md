@@ -1,9 +1,33 @@
-
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to this project are documented in this file.
 
-## [v0.1] — Initial Prototype (ELSIM)
+---
+
+## [v0.2] — Fake CPU Execution & Program Loading
+
+### Added
+- Fake CPU implementation:
+  - CPU state (registers, PC, FLAGS)
+  - Instruction fetch / decode / execute cycle
+  - Minimal instruction set with control-flow and memory access
+- Program loading support:
+  - Simple executable format (`elsim-bin`)
+  - ProgramLoader that loads code into RAM and sets entry point
+- CLI enhancements:
+  - `--program <path>` option to load and execute binaries
+- Demo programs and boards:
+  - Minimal "hello" program for Fake CPU
+  - Corresponding board configuration examples
+- Additional smoke and execution tests for CPU and loader
+
+### Changed
+- Simulator startup flow to support program loading before execution
+- Logging extended for CPU instruction execution and loader activity
+
+---
+
+## [v0.1] — Initial Prototype
 
 ### Added
 - Core architecture:
@@ -35,3 +59,4 @@ All notable changes to this project will be documented in this file.
   - `uart_smoke_test`
   - `timer_smoke_test`
   - `uart_timer_demo`
+
