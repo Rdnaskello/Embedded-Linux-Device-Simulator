@@ -1,5 +1,6 @@
 #include <yaml-cpp/yaml.h>
 
+#include <cstdint>
 #include <filesystem>
 #include <iostream>
 #include <optional>
@@ -9,6 +10,7 @@
 #include "elsim/core/BoardConfigParser.hpp"
 #include "elsim/core/BoardDescription.hpp"
 #include "elsim/core/Logger.hpp"
+#include "elsim/core/ProgramLoader.hpp"
 #include "elsim/core/Simulator.hpp"
 
 namespace fs = std::filesystem;
@@ -73,15 +75,21 @@ int main(int argc, char** argv) {
     LogLevel logLevel = LogLevel::Info;  // дефолтний рівень
     bool dryRun = false;                 // режим dry-run
 
+    fs::path programPath;
+    bool hasProgram = false;
+
     // Простий ручний парсинг аргументів:
     // очікуємо:
-    //   --config <path> [--log-level <debug|info|error|off>] [--dry-run]
+    //   --config <path> [--log-level <debug|info|error|off>] [--dry-run] [--program <path>]
     for (int i = 1; i < argc; ++i) {
         std::string_view arg = argv[i];
 
         if (arg == "--config") {
             if (i + 1 >= argc) {
                 std::cerr << "Missing value for --config\n";
+                std::cerr << "Usage: " << argv[0] << " --config <path-to-config.yaml>"
+                          << " [--log-level <debug|info|error|off>]" << " [--dry-run]"
+                          << " [--program <path-to-program.elsim-bin>]\n";
                 return 1;
             }
             configPath = fs::path{argv[++i]};
@@ -89,6 +97,9 @@ int main(int argc, char** argv) {
         } else if (arg == "--log-level") {
             if (i + 1 >= argc) {
                 std::cerr << "Missing value for --log-level\n";
+                std::cerr << "Usage: " << argv[0] << " --config <path-to-config.yaml>"
+                          << " [--log-level <debug|info|error|off>]" << " [--dry-run]"
+                          << " [--program <path-to-program.elsim-bin>]\n";
                 return 1;
             }
             std::string_view levelStr = argv[++i];
@@ -100,10 +111,21 @@ int main(int argc, char** argv) {
             logLevel = *lvl;
         } else if (arg == "--dry-run") {
             dryRun = true;
+        } else if (arg == "--program") {
+            if (i + 1 >= argc) {
+                std::cerr << "Missing value for --program\n";
+                std::cerr << "Usage: " << argv[0] << " --config <path-to-config.yaml>"
+                          << " [--log-level <debug|info|error|off>]" << " [--dry-run]"
+                          << " [--program <path-to-program.elsim-bin>]\n";
+                return 1;
+            }
+            programPath = fs::path{argv[++i]};
+            hasProgram = true;
         } else {
             std::cerr << "Unknown argument: " << arg << "\n";
             std::cerr << "Usage: " << argv[0] << " --config <path-to-config.yaml>"
-                      << " [--log-level <debug|info|error|off>]" << " [--dry-run]\n";
+                      << " [--log-level <debug|info|error|off>]" << " [--dry-run]"
+                      << " [--program <path-to-program.elsim-bin>]\n";
             return 1;
         }
     }
@@ -111,7 +133,8 @@ int main(int argc, char** argv) {
     if (!hasConfig) {
         std::cerr << "Missing required --config argument\n";
         std::cerr << "Usage: " << argv[0] << " --config <path-to-config.yaml>"
-                  << " [--log-level <debug|info|error|off>]" << " [--dry-run]\n";
+                  << " [--log-level <debug|info|error|off>]" << " [--dry-run]"
+                  << " [--program <path-to-program.elsim-bin>]\n";
         return 1;
     }
 
@@ -128,43 +151,65 @@ int main(int argc, char** argv) {
     // 1. Завантажити і провалідувати конфіг (спільно для dry-run та normal mode)
     auto board = loadBoardConfigOrExit(configPath);
 
-    if (dryRun) {
-        Logger::instance().info("CLI",
-                                "[elsim] Dry-run mode: configuration file will be validated. "
-                                "Simulator will NOT be started.");
-
-        try {
-            // Мінімальний smoke-тест: симулятор створюється та приймає board.
-            elsim::core::Simulator sim(std::cout);
-            sim.loadBoard(board);
-
-            Logger::instance().info("CLI",
-                                    "[elsim] Dry-run successful: configuration file is valid. "
-                                    "Simulator constructed and board loaded (no execution).");
-            return 0;
-        } catch (const std::exception& ex) {
-            Logger::instance().error(
-                "CLI",
-                std::string("[elsim] Dry-run failed while constructing Simulator or loading board: ") + ex.what());
-            return 1;
-        } catch (...) {
-            Logger::instance().error(
-                "CLI", "[elsim] Dry-run failed: unknown error during Simulator construction or board loading.");
-            return 1;
-        }
-    }
-
-    // Звичайний режим: створюємо симулятор, завантажуємо плату і запускаємо цикл
     try {
+        if (dryRun) {
+            Logger::instance().info(
+                "CLI", "[elsim] Dry-run mode: configuration file will be validated. Simulator will NOT be started.");
+        } else {
+            Logger::instance().info("CLI", "[elsim] Starting simulation...");
+        }
+
+        // Створюємо симулятор і завантажуємо плату
         elsim::core::Simulator sim(std::cout);
         sim.loadBoard(board);
 
-        Logger::instance().info("CLI", "[elsim] Starting simulation...");
-        sim.start();  // 0 => поки не stop(), реал логіка буде в майбутніх тасках
+        // --- NEW: якщо задана програма, завантажуємо її в пам'ять і виставляємо PC ---
+        if (hasProgram) {
+            Logger::instance().info("CLI", "[elsim] Loading program from '" + programPath.string() + "'");
+
+            auto* bus = sim.memoryBus();
+            if (!bus) {
+                throw std::runtime_error("Simulator has no MemoryBus initialized.");
+            }
+
+            elsim::core::ProgramLoader loader;
+            std::uint32_t entryPoint = 0;
+            loader.loadBinary(programPath.string(), *bus, entryPoint);
+
+            auto* cpu = sim.cpu();
+            if (!cpu) {
+                throw std::runtime_error("Simulator has no CPU initialized.");
+            }
+
+            cpu->setPC(entryPoint);
+
+            Logger::instance().info(
+                "CLI", "[elsim] Program loaded successfully. Entry point set to " + std::to_string(entryPoint));
+        } else {
+            Logger::instance().warn("CLI",
+                                    "[elsim] No program specified via --program. CPU will start from its reset PC.");
+        }
+
+        // --- Якщо dry-run: перевірка завершена, симуляцію не запускаємо ---
+        if (dryRun) {
+            if (hasProgram) {
+                Logger::instance().info(
+                    "CLI",
+                    "[elsim] Dry-run successful: configuration is valid, Simulator constructed and program loaded.");
+            } else {
+                Logger::instance().info(
+                    "CLI", "[elsim] Dry-run successful: configuration is valid and Simulator constructed.");
+            }
+            return 0;
+        }
+
+        // --- Звичайний режим: запускаємо симуляцію ---
+        sim.start();
 
         Logger::instance().info("CLI",
                                 "[elsim] Simulation finished. Total cycles: " + std::to_string(sim.cycleCount()));
         return 0;
+
     } catch (const std::exception& ex) {
         Logger::instance().error("CLI", std::string("[elsim] Simulation failed: ") + ex.what());
         std::cerr << "Simulation failed: " << ex.what() << "\n";

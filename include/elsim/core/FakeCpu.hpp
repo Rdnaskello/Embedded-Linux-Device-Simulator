@@ -40,6 +40,7 @@ class FakeCpu : public ICpu {
     void reset() override;
     bool loadImage(const std::string& path) override;
     void setMemoryBus(std::shared_ptr<IMemoryBus> bus) override;
+    void setPC(std::uint32_t value) noexcept override;
 
     // Декодування та виконання однієї 32-бітної інструкції
     void decodeAndExecute(std::uint32_t instruction);

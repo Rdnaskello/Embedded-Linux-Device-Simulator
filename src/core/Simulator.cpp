@@ -230,4 +230,12 @@ bool Simulator::isRunning() const noexcept { return running_; }
 
 std::uint64_t Simulator::cycleCount() const noexcept { return cycleCount_; }
 
+ICpu* Simulator::cpu() noexcept { return cpu_.get(); }
+
+const ICpu* Simulator::cpu() const noexcept { return cpu_.get(); }
+
+MemoryBus* Simulator::memoryBus() noexcept { return memoryBus_.get(); }
+
+const MemoryBus* Simulator::memoryBus() const noexcept { return memoryBus_.get(); }
+
 }  // namespace elsim::core
