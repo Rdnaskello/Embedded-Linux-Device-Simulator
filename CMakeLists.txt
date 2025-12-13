@@ -23,6 +23,7 @@ add_library(elsim_core
     src/device/TimerDevice.cpp
     src/core/MemoryBusAdapter.cpp
     src/core/DeviceMemoryAdapter.cpp
+    src/core/ProgramLoader.cpp
 )
 
 target_include_directories(elsim_core
@@ -110,6 +111,16 @@ add_executable(fakecpu_exec_smoke_test
 )
 
 target_link_libraries(fakecpu_exec_smoke_test
+    PRIVATE
+        elsim_core
+)
+
+# Example: program loader smoke test
+add_executable(program_loader_smoke_test
+    examples/program_loader_smoke_test.cpp
+)
+
+target_link_libraries(program_loader_smoke_test
     PRIVATE
         elsim_core
 )
