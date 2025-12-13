@@ -32,6 +32,12 @@ class Simulator {
     void stop();
     void runOneTick();
 
+    // Доступ до компонентів симулятора
+    ICpu* cpu() noexcept;
+    const ICpu* cpu() const noexcept;
+    MemoryBus* memoryBus() noexcept;
+    const MemoryBus* memoryBus() const noexcept;
+
     [[nodiscard]] bool isRunning() const noexcept;
     [[nodiscard]] std::uint64_t cycleCount() const noexcept;
 

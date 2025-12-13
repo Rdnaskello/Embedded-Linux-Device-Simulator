@@ -26,5 +26,8 @@ class ICpu {
 
     // Новий метод: чи знаходиться CPU у стані HALT
     virtual bool isHalted() const noexcept = 0;
+
+    // Отримати поточне значення PC
+    virtual void setPC(std::uint32_t value) noexcept = 0;
 };
 }  // namespace elsim::core
