@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16) 
+cmake_minimum_required(VERSION 3.16)
 
 project(EmbeddedLinuxDeviceSimulator VERSION 0.1.0 LANGUAGES CXX)
 
@@ -52,7 +52,7 @@ add_executable(basic_cpu_memory_test
 )
 
 target_link_libraries(basic_cpu_memory_test
-    PRIVATE 
+    PRIVATE
         elsim_core
 )
 
@@ -125,6 +125,22 @@ target_link_libraries(program_loader_smoke_test
         elsim_core
 )
 
+# Example: hello from ELSIM
+add_executable(build_hello_program
+    examples/build_hello_program.cpp
+)
+
+target_link_libraries(build_hello_program
+    PRIVATE
+        elsim_core
+)
+
+# Щоб build_hello_program завжди міг писати в repo/examples незалежно від cwd
+target_compile_definitions(build_hello_program
+    PRIVATE
+        PROJECT_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+)
+
 # CLI executable: elsim
 add_executable(elsim
     src/cli/main.cpp
@@ -141,9 +157,15 @@ target_compile_features(elsim PRIVATE cxx_std_20)
 
 include(FetchContent)
 
+# Прибираємо warning про timestamps для FetchContent (CMP0135)
+if(POLICY CMP0135)
+    cmake_policy(SET CMP0135 NEW)
+endif()
+
 FetchContent_Declare(
     googletest
     URL https://github.com/google/googletest/archive/refs/tags/v1.15.2.zip
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 
 # Для Windows/MSVC — уникнути конфлікту CRT
@@ -165,4 +187,3 @@ target_link_libraries(cpu_tests
 
 include(GoogleTest)
 gtest_discover_tests(cpu_tests)
-
