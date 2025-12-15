@@ -181,7 +181,7 @@ int main(int argc, char** argv) {
                 throw std::runtime_error("Simulator has no CPU initialized.");
             }
 
-            cpu->setPC(entryPoint);
+            cpu->setPc(entryPoint);
 
             Logger::instance().info(
                 "CLI", "[elsim] Program loaded successfully. Entry point set to " + std::to_string(entryPoint));
