@@ -50,6 +50,7 @@ VirtualLedDevice::VirtualLedDevice(std::string name, std::shared_ptr<elsim::core
 VirtualLedDevice::~VirtualLedDevice() {
     if (gpio_ && sub_id_ != 0) {
         gpio_->unsubscribe(sub_id_);
+        sub_id_ = 0;
     }
 }
 

@@ -127,6 +127,13 @@ IDevice* DeviceFactory::createDevice(const elsim::core::DeviceDescription& desc,
                                      "' requires BoardServices.gpio (shared controller), but it is null");
         }
 
+        // v0.3 invariant: exactly one source of truth for GPIO wiring per board.
+        // Simulator creates BoardServices.gpio with the board pin_count, so they must match.
+        if (services.gpio->pinCount() != static_cast<std::size_t>(pinCount)) {
+            throw std::runtime_error("DeviceFactory: GPIO device '" + desc.name +
+                                     "' pin_count mismatch with BoardServices.gpio");
+        }
+
         logger.info(COMPONENT, "Creating GPIO device: " + desc.name);
 
         char buf[128];

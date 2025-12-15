@@ -126,8 +126,31 @@ void Simulator::loadBoard(const BoardDescription& board) {
     // --- Пристрої: створюємо через DeviceFactory ---
     log_ << "[Simulator] Devices: " << board.devices.size() << "\n";
 
+    // v0.3: Determine GPIO pin count "from the board" (first gpio device param pin_count, else default 32).
+    std::uint32_t pinCount = 32;
+
+    for (const auto& devDesc : board.devices) {
+        const std::string typeLower = toLower(devDesc.type);
+        if (typeLower != "gpio") {
+            continue;
+        }
+
+        auto it = devDesc.params.find("pin_count");
+        if (it == devDesc.params.end()) {
+            break;  // gpio present but no pin_count -> keep default 32
+        }
+
+        unsigned long v = std::stoul(it->second, nullptr, 0);  // base 0 supports "32" and "0x20"
+        if (v == 0 || v > 32) {
+            throw std::runtime_error("Simulator: GPIO pin_count must be in range 1..32");
+        }
+
+        pinCount = static_cast<std::uint32_t>(v);
+        break;
+    }
+
     ::elsim::DeviceFactory::BoardServices services{};
-    services.gpio = std::make_shared<::elsim::core::GpioController>(32);  // v0.3: default 32 pins
+    services.gpio = std::make_shared<::elsim::core::GpioController>(pinCount);
 
     for (const auto& devDesc : board.devices) {
         log_ << "  - Creating device '" << devDesc.name << "' of type '" << devDesc.type << "' @ 0x" << std::hex
@@ -145,7 +168,6 @@ void Simulator::loadBoard(const BoardDescription& board) {
 
         devices_.emplace_back(raw);
 
-        //       тут зареєструємо пристрій як MMIO-регіон через mapDevice().
         // --- Пошук MMIO-регіону для цього девайса ---
         std::uint32_t mmioSize = 0;
         for (const auto& region : board.memory) {

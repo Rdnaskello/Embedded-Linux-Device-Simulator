@@ -122,3 +122,26 @@ TEST(GpioController, Callback_FiresWhenDirChangeAffectsEffectiveOutput) {
     EXPECT_EQ(last_pin, 0);
     EXPECT_FALSE(last_level);
 }
+
+TEST(GpioController, Unsubscribe_StopsCallback) {
+    elsim::core::GpioController gpio(8);
+
+    int calls = 0;
+
+    auto id = gpio.subscribeOnOutputChanged([&](std::size_t /*pin*/, bool /*level*/) { ++calls; });
+
+    gpio.setDirection(1, true);
+    gpio.writeOutput(1, true);
+    EXPECT_GT(calls, 0);
+
+    const int before = calls;
+    gpio.unsubscribe(id);
+
+    // Any further changes must NOT trigger callback.
+    gpio.writeOutput(1, false);
+    gpio.writeOutput(1, true);
+    gpio.setDirection(1, false);
+    gpio.setDirection(1, true);
+
+    EXPECT_EQ(calls, before);
+}

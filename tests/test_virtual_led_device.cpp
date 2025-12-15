@@ -40,3 +40,22 @@ TEST(VirtualLedDevice, ActiveLow_Inverts) {
     gpio->setDirection(0, true);
     EXPECT_FALSE(led.isOn());
 }
+
+TEST(VirtualLedDevice, UnsubscribeOnDestruction_NoCrashOnFurtherGpioChanges) {
+    auto gpio = std::make_shared<elsim::core::GpioController>(8);
+
+    {
+        elsim::VirtualLedDevice led("led0", gpio, 1, true);
+        // optional: drive something while alive
+        gpio->setDirection(1, true);
+        gpio->writeOutput(1, true);
+        EXPECT_TRUE(led.isOn());
+    }  // led destroyed -> must unsubscribe safely
+
+    // If unsubscribe is correct, these must NOT call a dead callback (no UAF).
+    gpio->setDirection(1, true);
+    gpio->writeOutput(1, false);
+    gpio->writeOutput(1, true);
+
+    SUCCEED();
+}
