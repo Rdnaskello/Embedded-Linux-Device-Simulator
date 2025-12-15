@@ -61,3 +61,17 @@ target_link_libraries(virtual_led_tests
         GTest::gtest_main
 )
 gtest_discover_tests(virtual_led_tests)
+
+
+# GPIO MMIO + Virtual LED integration test (TASK-8.3b)
+add_executable(gpio_led_integration_tests
+    test_gpio_led_integration.cpp
+)
+
+target_link_libraries(gpio_led_integration_tests
+    PRIVATE
+        elsim_core
+        GTest::gtest_main
+)
+
+gtest_discover_tests(gpio_led_integration_tests)

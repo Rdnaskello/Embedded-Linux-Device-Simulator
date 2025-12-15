@@ -116,6 +116,4 @@ void GpioController::validatePin_(std::size_t pin) const {
 
 GpioController::GpioMask GpioController::bit_(std::size_t pin) { return (static_cast<GpioMask>(1) << pin); }
 
-void GpioController::unsubscribeOnOutputChanged(std::size_t id) { out_subs_.erase(id); }
-
 }  // namespace elsim::core

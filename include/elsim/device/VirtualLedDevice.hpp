@@ -31,7 +31,7 @@ class VirtualLedDevice final : public BaseDevice {
     std::size_t pin_;
     bool active_high_;
     bool is_on_;
-    std::size_t sub_id_{0};
+    elsim::core::GpioController::SubscriptionId sub_id_{0};
 };
 
 }  // namespace elsim
