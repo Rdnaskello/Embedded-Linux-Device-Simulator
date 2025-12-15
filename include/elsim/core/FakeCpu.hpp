@@ -87,10 +87,6 @@ class FakeCpu : public ICpu {
     bool imageLoaded_{false};
     std::string lastImagePath_{};
 
-    // Тимчасовий "старий" PC, який використовується існуючою step()-логікою.
-    // Ми залишаємо його, щоб не ламати поточні smoke-тести (варіант A).
-    std::uint32_t pc_{0};
-
     // Статус HALT для нового виконуючого ядра
     bool halted_{false};
 

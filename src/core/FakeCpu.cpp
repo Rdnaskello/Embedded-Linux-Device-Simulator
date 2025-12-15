@@ -421,10 +421,6 @@ void FakeCpu::step() {
 
     // 2. Decode + Execute: передаємо інструкцію у decodeAndExecute()
     decodeAndExecute(instruction);
-
-    // 3. Для сумісності тримаємо старе поле pc_ синхронізованим з архітектурним PC.
-    //    Пізніше його можна буде повністю прибрати.
-    pc_ = state_.pc;
 }
 
 void FakeCpu::reset() {
@@ -446,9 +442,6 @@ void FakeCpu::reset() {
 
     // FLAGS = 0 (Z = N = C = V = 0)
     state_.flags = 0u;
-
-    // Для сумісності з поточною step()-логікою тримаємо pc_ синхронізованим
-    pc_ = state_.pc;
 }
 
 bool FakeCpu::loadImage(const std::string& path) {
@@ -457,10 +450,7 @@ bool FakeCpu::loadImage(const std::string& path) {
     return imageLoaded_;
 }
 
-void FakeCpu::setPC(std::uint32_t value) noexcept {
-    state_.pc = value;
-    pc_ = value;  // важливо: тримаємо синхронізацію
-}
+void FakeCpu::setPC(std::uint32_t value) noexcept { state_.pc = value; }
 
 void FakeCpu::setMemoryBus(std::shared_ptr<IMemoryBus> bus) { memoryBus_ = std::move(bus); }
 
