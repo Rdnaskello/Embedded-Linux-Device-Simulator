@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(EmbeddedLinuxDeviceSimulator VERSION 0.1.0 LANGUAGES CXX)
+project(EmbeddedLinuxDeviceSimulator VERSION 0.2.0 LANGUAGES CXX)
+# --- Project version header (generated) ---
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/elsim/Version.hpp.in
+    ${CMAKE_CURRENT_BINARY_DIR}/generated/elsim/Version.hpp
+    @ONLY
+)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -29,6 +35,7 @@ add_library(elsim_core
 target_include_directories(elsim_core
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_BINARY_DIR}/generated
 )
 
 target_link_libraries(elsim_core

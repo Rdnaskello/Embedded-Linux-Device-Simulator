@@ -4,7 +4,7 @@ All notable changes to this project are documented in this file.
 
 ---
 
-## [v0.2] — Fake CPU Execution & Program Loading
+## [v0.2.0] — Fake CPU Execution & Program Loading
 
 ### Added
 - Fake CPU implementation:
@@ -27,7 +27,7 @@ All notable changes to this project are documented in this file.
 
 ---
 
-## [v0.1] — Initial Prototype
+## [v0.1.0] — Initial Prototype
 
 ### Added
 - Core architecture:
