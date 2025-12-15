@@ -7,6 +7,7 @@
 
 #include "elsim/core/Logger.hpp"
 
+namespace elsim::core {
 namespace {
 
 constexpr std::string_view COMPONENT = "MMIO";
@@ -140,3 +141,4 @@ void MemoryBus::mapDevice(std::uint32_t baseAddress, std::uint32_t size, std::sh
     // Якщо перекриття немає — додаємо девайс.
     m_devices.push_back(MappedDevice{baseAddress, size, std::move(device)});
 }
+}  // namespace elsim::core

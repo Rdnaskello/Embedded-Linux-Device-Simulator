@@ -14,6 +14,7 @@
 using elsim::core::FakeCpu;
 using elsim::core::Logger;
 using elsim::core::LogLevel;
+using elsim::core::MemoryBus;
 using elsim::core::MemoryBusAdapter;
 
 // OPC-коди згідно fakecpu_isa.md / FakeCpu.cpp
@@ -63,7 +64,7 @@ constexpr std::uint32_t ENCODE_J(std::uint8_t opc, std::int16_t offsetWords) {
 }
 
 // Запис 32-бітної інструкції в RAM (little-endian)
-void write_instr(::MemoryBus& bus, std::uint32_t addr, std::uint32_t instr) {
+void write_instr(MemoryBus& bus, std::uint32_t addr, std::uint32_t instr) {
     bus.write8(addr + 0, static_cast<std::uint8_t>(instr & 0xFFu));
     bus.write8(addr + 1, static_cast<std::uint8_t>((instr >> 8) & 0xFFu));
     bus.write8(addr + 2, static_cast<std::uint8_t>((instr >> 16) & 0xFFu));
@@ -77,7 +78,7 @@ int main() {
     Logger::instance().set_level(LogLevel::Debug);
 
     // 1. Створюємо RAM і CPU
-    ::MemoryBus ram(256);  // 256 байт RAM достатньо
+    MemoryBus ram(256);  // 256 байт RAM достатньо
     FakeCpu cpu;
 
     // Адаптер шини для CPU (як у Simulator)

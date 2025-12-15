@@ -7,8 +7,8 @@
 #include "elsim/core/MemoryBus.hpp"
 #include "elsim/core/MemoryBusAdapter.hpp"
 
-using ::MemoryBus;
 using elsim::core::FakeCpu;
+using elsim::core::MemoryBus;
 using elsim::core::MemoryBusAdapter;
 
 namespace {
