@@ -17,6 +17,8 @@
 //  2. Якщо девайс знайдено — делегуємо операцію йому.
 //  3. Якщо ні — працюємо з RAM.
 //  4. Якщо адреса за межами RAM — кидаємо exception.
+namespace elsim::core {
+
 class MemoryBus {
    public:
     // Створюємо шину з заданим розміром RAM у байтах.
@@ -53,3 +55,5 @@ class MemoryBus {
     // Повертає вказівник на MappedDevice або nullptr, якщо не знайдено.
     const MappedDevice* findDevice(std::uint32_t address) const;
 };
+
+}  // namespace elsim::core

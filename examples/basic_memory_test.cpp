@@ -5,7 +5,8 @@
 
 #include "elsim/core/IMemoryMappedDevice.hpp"
 #include "elsim/core/MemoryBus.hpp"
-
+using elsim::core::IMemoryMappedDevice;
+using elsim::core::MemoryBus;
 // Простий MMIO-девайс на 16 байт.
 // Використовується лише для перевірки MemoryBus.
 class TestDevice : public IMemoryMappedDevice {

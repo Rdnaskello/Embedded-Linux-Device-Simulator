@@ -9,6 +9,8 @@
 //
 // CPU бачить 1 великий адресний простір, а деякі діапазони адрес
 // віддаються девайсам (регістр, таймер, UART і т.д.).
+namespace elsim::core {
+
 class IMemoryMappedDevice {
    public:
     virtual ~IMemoryMappedDevice() = default;
@@ -21,3 +23,5 @@ class IMemoryMappedDevice {
     // offset — це зсув від базової MMIO-адреси девайса.
     virtual void write8(std::uint32_t offset, std::uint8_t value) = 0;
 };
+
+}  // namespace elsim::core

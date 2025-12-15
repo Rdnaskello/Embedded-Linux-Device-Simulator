@@ -5,6 +5,7 @@
 #include "elsim/core/IMemoryMappedDevice.hpp"
 #include "elsim/device/IDevice.hpp"
 
+namespace elsim::core {
 // Адаптер, який дозволяє використовувати elsim::IDevice як IMemoryMappedDevice
 class DeviceMemoryAdapter : public IMemoryMappedDevice {
    public:
@@ -27,3 +28,4 @@ class DeviceMemoryAdapter : public IMemoryMappedDevice {
    private:
     elsim::IDevice* device_;  // не володіємо, життям керує Simulator через unique_ptr
 };
+}  // namespace elsim::core
