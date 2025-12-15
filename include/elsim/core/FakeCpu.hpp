@@ -35,28 +35,28 @@ class FakeCpu : public ICpu {
     FakeCpu() = default;
     ~FakeCpu() override = default;
 
-    // Основні методи CPU
+    // ===== ICpu =====
     void step() override;
     void reset() override;
     bool loadImage(const std::string& path) override;
     void setMemoryBus(std::shared_ptr<IMemoryBus> bus) override;
-    void setPC(std::uint32_t value) noexcept override;
+    bool isHalted() const noexcept override { return halted_; }
+
+    std::uint32_t getPc() const noexcept override { return state_.pc; }
+    void setPc(std::uint32_t value) noexcept override;
+
+    // ===== FakeCpu API =====
 
     // Декодування та виконання однієї 32-бітної інструкції
     void decodeAndExecute(std::uint32_t instruction);
 
-    // Перевірити, чи CPU перебуває в стані HALT
-    [[nodiscard]] bool isHalted() const noexcept { return halted_; }
-
-    // --- Доступ до стану CPU (для майбутніх тестів / дебагу) ---
+    // --- Доступ до стану CPU (для тестів / дебагу) ---
     [[nodiscard]] const CpuState& state() const noexcept { return state_; }
 
     Register getRegister(std::size_t index) const;
     void setRegister(std::size_t index, Register value);
 
-    [[nodiscard]] Register getPc() const noexcept { return state_.pc; }
-    void setPc(Register value) noexcept { state_.pc = value; }
-
+    // Локальні (не ICpu) аксесори — ок, але тримаємо послідовність
     [[nodiscard]] Register getSp() const noexcept { return state_.sp; }
     void setSp(Register value) noexcept { state_.sp = value; }
 

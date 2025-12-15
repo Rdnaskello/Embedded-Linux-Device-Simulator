@@ -450,7 +450,7 @@ bool FakeCpu::loadImage(const std::string& path) {
     return imageLoaded_;
 }
 
-void FakeCpu::setPC(std::uint32_t value) noexcept { state_.pc = value; }
+void FakeCpu::setPc(std::uint32_t value) noexcept { state_.pc = value; }
 
 void FakeCpu::setMemoryBus(std::shared_ptr<IMemoryBus> bus) { memoryBus_ = std::move(bus); }
 
