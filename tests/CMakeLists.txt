@@ -24,3 +24,16 @@ target_link_libraries(memory_bus_tests
 )
 
 add_test(NAME memory_bus_tests COMMAND memory_bus_tests)
+
+# GPIO unit tests (TASK-8.1)
+add_executable(gpio_tests
+    test_gpio_controller.cpp
+)
+
+target_link_libraries(gpio_tests
+    PRIVATE
+        elsim_core
+        GTest::gtest_main
+)
+
+gtest_discover_tests(gpio_tests)
