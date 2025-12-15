@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <string>
 
 #include "elsim/core/GpioController.hpp"
@@ -12,7 +13,8 @@ class GpioDevice final : public BaseDevice {
    public:
     static constexpr std::uint32_t RegisterSize = 0x18;
 
-    GpioDevice(const std::string& name, std::uint32_t baseAddress, std::uint32_t pinCount = 32);
+    GpioDevice(const std::string& name, std::uint32_t baseAddress, std::uint32_t pinCount,
+               std::shared_ptr<elsim::core::GpioController> gpio);
 
     std::uint8_t read(std::uint32_t offset) override;
     void write(std::uint32_t offset, std::uint8_t value) override;
@@ -41,7 +43,7 @@ class GpioDevice final : public BaseDevice {
    private:
     std::uint32_t pinCount_;
     std::uint32_t pinMask_;
-    elsim::core::GpioController gpio_;
+    std::shared_ptr<elsim::core::GpioController> gpio_;
 };
 
 }  // namespace elsim

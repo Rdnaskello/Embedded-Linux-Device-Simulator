@@ -1,5 +1,7 @@
 #include "elsim/core/Simulator.hpp"
 
+#include <algorithm>
+#include <cctype>
 #include <limits>
 
 #include "elsim/core/BoardDescription.hpp"
@@ -7,6 +9,13 @@
 #include "elsim/core/FakeCpu.hpp"
 #include "elsim/core/MemoryBusAdapter.hpp"
 #include "elsim/device/DeviceFactory.hpp"  // знадобиться пізніше в loadBoard
+
+namespace {
+std::string toLower(std::string s) {
+    std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return s;
+}
+}  // namespace
 
 namespace elsim::core {
 
@@ -117,16 +126,21 @@ void Simulator::loadBoard(const BoardDescription& board) {
     // --- Пристрої: створюємо через DeviceFactory ---
     log_ << "[Simulator] Devices: " << board.devices.size() << "\n";
 
+    ::elsim::DeviceFactory::BoardServices services{};
+    services.gpio = std::make_shared<::elsim::core::GpioController>(32);  // v0.3: default 32 pins
+
     for (const auto& devDesc : board.devices) {
         log_ << "  - Creating device '" << devDesc.name << "' of type '" << devDesc.type << "' @ 0x" << std::hex
              << devDesc.baseAddress << std::dec << "\n";
 
-        // Використовуємо фабрику з elsim::DeviceFactory (не elsim::device!)
-        ::elsim::IDevice* raw = ::elsim::DeviceFactory::createDevice(devDesc);
+        const std::string typeLower = toLower(devDesc.type);
 
-        if (!raw) {
-            throw std::runtime_error("DeviceFactory could not create device '" + devDesc.name + "' of type '" +
-                                     devDesc.type + "'");
+        ::elsim::IDevice* raw = nullptr;
+
+        if (typeLower == "gpio" || typeLower == "led" || typeLower == "virtual-led") {
+            raw = ::elsim::DeviceFactory::createDevice(devDesc, services);
+        } else {
+            raw = ::elsim::DeviceFactory::createDevice(devDesc);
         }
 
         devices_.emplace_back(raw);
@@ -150,9 +164,6 @@ void Simulator::loadBoard(const BoardDescription& board) {
             }
         }
         if (mmioSize == 0) {
-            // Немає відповідного MMIO-регіону — просто попереджаємо й не мапимо.
-            log_ << "[Simulator] WARNING: No MMIO region found for device '" << devDesc.name << "' at base 0x"
-                 << std::hex << devDesc.baseAddress << std::dec << " — device will not be memory-mapped.\n";
             continue;
         }
 
