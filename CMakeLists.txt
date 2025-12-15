@@ -33,6 +33,7 @@ add_library(elsim_core
     src/core/GpioController.cpp
     src/device/GpioDevice.cpp
     src/device/VirtualLedDevice.cpp
+    src/device/VirtualButtonDevice.cpp
 )
 
 target_include_directories(elsim_core

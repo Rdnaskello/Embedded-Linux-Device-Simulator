@@ -75,3 +75,16 @@ target_link_libraries(gpio_led_integration_tests
 )
 
 gtest_discover_tests(gpio_led_integration_tests)
+
+# Virtual BUTTON device tests (TASK-8.4)
+add_executable(virtual_button_tests
+    test_virtual_button_device.cpp
+)
+
+target_link_libraries(virtual_button_tests
+    PRIVATE
+        elsim_core
+        GTest::gtest_main
+)
+
+gtest_discover_tests(virtual_button_tests)

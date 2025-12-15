@@ -11,6 +11,7 @@
 #include "elsim/device/GpioDevice.hpp"
 #include "elsim/device/TimerDevice.hpp"
 #include "elsim/device/UartDevice.hpp"
+#include "elsim/device/VirtualButtonDevice.hpp"
 #include "elsim/device/VirtualLedDevice.hpp"
 
 namespace elsim {
@@ -98,7 +99,8 @@ IDevice* DeviceFactory::createDevice(const elsim::core::DeviceDescription& desc)
     const auto normalizedType = toLower(desc.type);
 
     // IMPORTANT: without services, GPIO/LED would create a private controller and break board-level wiring.
-    if (normalizedType == "gpio" || normalizedType == "led" || normalizedType == "virtual-led") {
+    if (normalizedType == "gpio" || normalizedType == "led" || normalizedType == "virtual-led" ||
+        normalizedType == "button" || normalizedType == "virtual-button") {
         throw std::runtime_error(
             "DeviceFactory::createDevice(desc): device type '" + desc.type +
             "' requires BoardServices (shared GPIO). Use createDevice(desc, services) from Simulator.");
@@ -165,6 +167,40 @@ IDevice* DeviceFactory::createDevice(const elsim::core::DeviceDescription& desc,
         logger.debug(COMPONENT, buf);
 
         return new VirtualLedDevice(desc.name, services.gpio, static_cast<std::size_t>(pin), activeHigh);
+    }
+
+    if (normalizedType == "button" || normalizedType == "virtual-button") {
+        if (!services.gpio) {
+            throw std::runtime_error("DeviceFactory: BUTTON device '" + desc.name +
+                                     "' requires BoardServices.gpio (shared controller), but it is null");
+        }
+
+        const std::uint32_t pin = parseU32Param(desc.params, "pin", 0xFFFF'FFFFu);
+        if (pin == 0xFFFF'FFFFu) {
+            throw std::runtime_error("DeviceFactory: BUTTON device '" + desc.name + "' requires param 'pin'");
+        }
+
+        const bool activeHigh = parseBoolParam(desc.params, "active_high", true);
+
+        // Optional mode (default momentary)
+        std::string mode = "momentary";
+        auto it = desc.params.find("mode");
+        if (it != desc.params.end()) {
+            mode = toLower(it->second);
+        }
+        if (mode != "momentary") {
+            throw std::runtime_error("DeviceFactory: BUTTON device '" + desc.name + "' unsupported mode '" + mode +
+                                     "' (supported: momentary)");
+        }
+
+        logger.info(COMPONENT, "Creating Virtual BUTTON device: " + desc.name);
+
+        char buf[200];
+        std::snprintf(buf, sizeof(buf), "Created BUTTON device '%s' pin=%u active_high=%s mode=%s", desc.name.c_str(),
+                      pin, activeHigh ? "true" : "false", mode.c_str());
+        logger.debug(COMPONENT, buf);
+
+        return new VirtualButtonDevice(desc.name, services.gpio, static_cast<std::size_t>(pin), activeHigh, mode);
     }
 
     // fallback to existing path for uart/timer (and unknowns)
