@@ -121,17 +121,12 @@ void Simulator::loadBoard(const BoardDescription& board) {
         log_ << "  - Creating device '" << devDesc.name << "' of type '" << devDesc.type << "' @ 0x" << std::hex
              << devDesc.baseAddress << std::dec << "\n";
 
-        if (devDesc.baseAddress > std::numeric_limits<std::uint32_t>::max()) {
-            throw std::runtime_error("Device baseAddress out of 32-bit range for device '" + devDesc.name + "'");
-        }
-
         // Використовуємо фабрику з elsim::DeviceFactory (не elsim::device!)
-        ::elsim::IDevice* raw = ::elsim::DeviceFactory::createDevice(devDesc.type, devDesc.name,
-                                                                     static_cast<std::uint32_t>(devDesc.baseAddress));
+        ::elsim::IDevice* raw = ::elsim::DeviceFactory::createDevice(devDesc);
 
         if (!raw) {
-            throw std::runtime_error("DeviceFactory could not create device of type '" + devDesc.type + "' (name: '" +
-                                     devDesc.name + "')");
+            throw std::runtime_error("DeviceFactory could not create device '" + devDesc.name + "' of type '" +
+                                     devDesc.type + "'");
         }
 
         devices_.emplace_back(raw);
