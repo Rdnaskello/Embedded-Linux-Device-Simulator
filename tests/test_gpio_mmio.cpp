@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "elsim/core/DeviceMemoryAdapter.hpp"
+#include "elsim/core/GpioController.hpp"
 #include "elsim/core/MemoryBus.hpp"
 #include "elsim/device/GpioDevice.hpp"
 
@@ -36,13 +37,16 @@ std::uint32_t read32(elsim::core::MemoryBus& bus, std::uint32_t addr) {
 }
 
 struct MappedGpio {
-    std::unique_ptr<elsim::GpioDevice> gpio;  // owns the device lifetime
+    std::shared_ptr<elsim::core::GpioController> ctrl;  // shared board-level GPIO controller
+    std::unique_ptr<elsim::GpioDevice> gpio;            // owns the device lifetime
     std::shared_ptr<elsim::core::DeviceMemoryAdapter> mmio;
 };
 
 MappedGpio mapGpio(elsim::core::MemoryBus& bus, std::uint32_t base, std::uint32_t windowSize, std::uint32_t pinCount) {
     MappedGpio m{};
-    m.gpio = std::make_unique<elsim::GpioDevice>("gpio0", base, pinCount);
+
+    m.ctrl = std::make_shared<elsim::core::GpioController>(pinCount);
+    m.gpio = std::make_unique<elsim::GpioDevice>("gpio0", base, pinCount, m.ctrl);
 
     // DeviceMemoryAdapter expects raw IDevice*, so keep m.gpio alive for whole test.
     m.mmio = std::make_shared<elsim::core::DeviceMemoryAdapter>(m.gpio.get());

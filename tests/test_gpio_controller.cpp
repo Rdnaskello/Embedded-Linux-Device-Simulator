@@ -4,6 +4,7 @@
 #include <stdexcept>
 
 #include "elsim/core/GpioController.hpp"
+using elsim::core::GpioController;
 
 TEST(GpioController, ResetState_IsAllZeros) {
     elsim::core::GpioController gpio(/*pinCount=*/8);
@@ -90,4 +91,34 @@ TEST(GpioController, Callback_FiresOnlyOnChangeAndOnlyWhenDirIsOutput) {
     gpio.unsubscribe(id);
     gpio.writeOutput(/*pin=*/2, /*level=*/true);
     EXPECT_EQ(calls, 2);
+}
+
+TEST(GpioController, Callback_FiresWhenDirChangeAffectsEffectiveOutput) {
+    GpioController gpio(8);
+
+    int calls = 0;
+    int last_pin = -1;
+    bool last_level = false;
+
+    gpio.subscribeOnOutputChanged([&](int pin, bool level) {
+        ++calls;
+        last_pin = pin;
+        last_level = level;
+    });
+
+    // Latch OUT=1 while still INPUT -> effective remains 0, so no callback.
+    gpio.writeOutput(0, true);
+    EXPECT_EQ(calls, 0);
+
+    // Switching DIR to OUTPUT should change effective from 0 to 1 -> callback must fire.
+    gpio.setDirection(0, true);
+    EXPECT_EQ(calls, 1);
+    EXPECT_EQ(last_pin, 0);
+    EXPECT_TRUE(last_level);
+
+    // Switching DIR back to INPUT should drop effective to 0 -> callback must fire again.
+    gpio.setDirection(0, false);
+    EXPECT_EQ(calls, 2);
+    EXPECT_EQ(last_pin, 0);
+    EXPECT_FALSE(last_level);
 }

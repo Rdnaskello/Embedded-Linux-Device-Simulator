@@ -29,6 +29,7 @@ class GpioController final {
 
     SubscriptionId subscribeOnOutputChanged(OutputCallback cb);
     void unsubscribe(SubscriptionId id);
+    void unsubscribeOnOutputChanged(std::size_t id);
 
    private:
     void validatePin_(std::size_t pin) const;

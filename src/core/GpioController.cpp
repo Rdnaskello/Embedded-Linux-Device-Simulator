@@ -16,10 +16,33 @@ void GpioController::setDirection(std::size_t pin, bool isOutput) {
     validatePin_(pin);
     const auto b = bit_(pin);
 
+    // Old effective level for this pin.
+    const bool was = (effective_out_ & b) != 0;
+
+    // Update DIR
     if (isOutput) {
         dir_ |= b;
     } else {
         dir_ &= ~b;
+    }
+
+    const GpioMask new_effective = dir_ & out_;
+    const bool now = (new_effective & b) != 0;
+
+    if (was == now) {
+        // Even if DIR changed, externally observable output did not.
+        effective_out_ = new_effective;
+        return;
+    }
+
+    effective_out_ = new_effective;
+
+    auto subs = out_subs_;
+    for (const auto& [id, cb] : subs) {
+        (void)id;
+        if (cb) {
+            cb(pin, now);
+        }
     }
 }
 
@@ -92,5 +115,7 @@ void GpioController::validatePin_(std::size_t pin) const {
 }
 
 GpioController::GpioMask GpioController::bit_(std::size_t pin) { return (static_cast<GpioMask>(1) << pin); }
+
+void GpioController::unsubscribeOnOutputChanged(std::size_t id) { out_subs_.erase(id); }
 
 }  // namespace elsim::core

@@ -50,3 +50,14 @@ target_link_libraries(gpio_mmio_tests
 )
 
 gtest_discover_tests(gpio_mmio_tests)
+
+# Virtual LED device tests (TASK-8.3)
+add_executable(virtual_led_tests    
+    test_virtual_led_device.cpp
+)   
+target_link_libraries(virtual_led_tests
+    PRIVATE
+        elsim_core
+        GTest::gtest_main
+)
+gtest_discover_tests(virtual_led_tests)
