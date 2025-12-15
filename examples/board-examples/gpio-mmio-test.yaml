@@ -1,0 +1,27 @@
+board:
+  name: gpio-mmio-test
+  description: GPIO MMIO integration test
+  version: 1
+
+  cpu:
+    type: test-cpu
+    frequency_hz: 1000000
+    endianness: little
+
+  memory:
+    - name: ram
+      type: ram
+      base: 0x00000000
+      size: 65536
+
+    - name: mmio
+      type: mmio
+      base: 0x00003000
+      size: 0x00000100
+
+  devices:
+    - type: gpio
+      name: gpio0
+      base: 0x00003000
+      params:
+        pin_count: "32"

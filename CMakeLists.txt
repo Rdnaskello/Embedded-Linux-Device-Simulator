@@ -31,6 +31,7 @@ add_library(elsim_core
     src/core/DeviceMemoryAdapter.cpp
     src/core/ProgramLoader.cpp
     src/core/GpioController.cpp
+    src/device/GpioDevice.cpp
 )
 
 target_include_directories(elsim_core

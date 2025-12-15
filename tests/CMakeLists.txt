@@ -37,3 +37,16 @@ target_link_libraries(gpio_tests
 )
 
 gtest_discover_tests(gpio_tests)
+
+# GPIO MMIO tests (TASK-8.2)
+add_executable(gpio_mmio_tests
+    test_gpio_mmio.cpp
+)
+
+target_link_libraries(gpio_mmio_tests
+    PRIVATE
+        elsim_core
+        GTest::gtest_main
+)
+
+gtest_discover_tests(gpio_mmio_tests)
