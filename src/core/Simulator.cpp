@@ -160,7 +160,8 @@ void Simulator::loadBoard(const BoardDescription& board) {
 
         ::elsim::IDevice* raw = nullptr;
 
-        if (typeLower == "gpio" || typeLower == "led" || typeLower == "virtual-led") {
+        if (typeLower == "gpio" || typeLower == "led" || typeLower == "virtual-led" || typeLower == "button" ||
+            typeLower == "virtual-button") {
             raw = ::elsim::DeviceFactory::createDevice(devDesc, services);
         } else {
             raw = ::elsim::DeviceFactory::createDevice(devDesc);

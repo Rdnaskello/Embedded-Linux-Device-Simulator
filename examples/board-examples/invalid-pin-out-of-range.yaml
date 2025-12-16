@@ -1,0 +1,20 @@
+board:
+  name: invalid-pin-out-of-range
+  cpu:
+    type: test-cpu
+    frequency_hz: 1000000
+  memory:
+    - name: ram
+      type: ram
+      base: 0x0
+      size: 1024
+    - name: mmio
+      type: mmio
+      base: 0x20000000
+      size: 0x100
+  gpio:
+    mmio_base: 0x20000000
+    pin_count: 2
+  leds:
+    - name: led1
+      pin: 2
