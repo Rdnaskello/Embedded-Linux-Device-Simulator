@@ -43,7 +43,7 @@ VirtualLedDevice::VirtualLedDevice(std::string name, std::shared_ptr<elsim::core
         }
 
         is_on_ = new_on;
-        elsim::core::Logger::instance().debug(COMPONENT, this->name() + " -> " + (is_on_ ? "ON" : "OFF"));
+        elsim::core::Logger::instance().info(COMPONENT, this->name() + " -> " + (is_on_ ? "ON" : "OFF"));
     });
 }
 
