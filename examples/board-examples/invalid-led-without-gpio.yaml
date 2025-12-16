@@ -1,0 +1,13 @@
+board:
+  name: invalid-led-without-gpio
+  cpu:
+    type: test-cpu
+    frequency_hz: 1000000
+  memory:
+    - name: ram
+      type: ram
+      base: 0x0
+      size: 1024
+  leds:
+    - name: led1
+      pin: 0

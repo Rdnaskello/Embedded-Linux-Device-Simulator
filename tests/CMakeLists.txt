@@ -88,3 +88,21 @@ target_link_libraries(virtual_button_tests
 )
 
 gtest_discover_tests(virtual_button_tests)
+
+# BoardConfigParser GPIO/LED/Button YAML tests (TASK-8.5)
+add_executable(board_config_parser_gpio_led_button_tests
+    test_board_config_parser_gpio_led_button.cpp
+)
+
+target_link_libraries(board_config_parser_gpio_led_button_tests
+    PRIVATE
+        elsim_core
+        GTest::gtest_main
+)
+
+target_compile_definitions(board_config_parser_gpio_led_button_tests
+    PRIVATE
+        ELSIM_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+)
+
+gtest_discover_tests(board_config_parser_gpio_led_button_tests)
