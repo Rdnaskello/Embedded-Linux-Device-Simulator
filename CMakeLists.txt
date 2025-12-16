@@ -152,6 +152,22 @@ target_compile_definitions(build_hello_program
         PROJECT_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
 )
 
+# Example: gpio blinky program builder (TASK-8.6)
+add_executable(build_gpio_blinky_program
+    examples/build_gpio_blinky_program.cpp
+)
+
+target_link_libraries(build_gpio_blinky_program
+    PRIVATE
+        elsim_core
+)
+
+# Щоб build_gpio_blinky_program завжди міг писати в repo/examples незалежно від cwd
+target_compile_definitions(build_gpio_blinky_program
+    PRIVATE
+        PROJECT_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+)
+
 # CLI executable: elsim
 add_executable(elsim
     src/cli/main.cpp
