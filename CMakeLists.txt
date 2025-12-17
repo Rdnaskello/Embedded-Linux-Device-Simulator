@@ -171,6 +171,10 @@ target_compile_definitions(build_gpio_blinky_program
 # CLI executable: elsim
 add_executable(elsim
     src/cli/main.cpp
+    src/cli/CliApp.cpp
+    src/cli/commands/RunCommand.cpp
+    src/cli/commands/ListBoardsCommand.cpp
+    src/cli/commands/HelpCommand.cpp
 )
 
 target_link_libraries(elsim
