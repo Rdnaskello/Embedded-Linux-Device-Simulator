@@ -7,6 +7,7 @@
 #include "elsim/core/GpioController.hpp"
 #include "elsim/core/MemoryBus.hpp"
 #include "elsim/device/GpioDevice.hpp"
+#include "elsim/device/VirtualButtonDevice.hpp"
 
 namespace {
 
@@ -98,5 +99,41 @@ TEST(GpioMmio, WriteToDataInIsIgnoredAndReadIsDeterministic) {
     write32(bus, GPIO_BASE + REG_DATA_IN, 0xFFFFFFFFu);
 
     // With no injected inputs and DIR default = input (0), read should be 0.
+    EXPECT_EQ(read32(bus, GPIO_BASE + REG_DATA_IN), 0x00000000u);
+}
+
+TEST(GpioMmio, UnknownOffset_ReadReturnsDeterministicDefault_AndWriteIsIgnored) {
+    elsim::core::MemoryBus bus(64 * 1024);
+
+    auto mapped = mapGpio(bus, GPIO_BASE, 0x100, 32);
+
+    // Choose an offset within mapped window (0x100), but outside device RegisterSize (0x18).
+    constexpr std::uint32_t UNKNOWN_OFF = 0x80;
+
+    // Deterministic default for invalid reads in GpioDevice is 0x00.
+    EXPECT_EQ(bus.read8(GPIO_BASE + UNKNOWN_OFF), 0x00u);
+
+    // Invalid write must be ignored and must not crash.
+    EXPECT_NO_THROW(bus.write8(GPIO_BASE + UNKNOWN_OFF, 0xABu));
+
+    // Re-read should still be deterministic.
+    EXPECT_EQ(bus.read8(GPIO_BASE + UNKNOWN_OFF), 0x00u);
+}
+
+TEST(GpioMmio, DataIn_ReflectsVirtualButtonPress_WhenPinIsInput) {
+    elsim::core::MemoryBus bus(64 * 1024);
+
+    auto mapped = mapGpio(bus, GPIO_BASE, 0x100, 32);
+
+    constexpr std::size_t BTN_PIN = 2;
+    elsim::VirtualButtonDevice btn("btn0", mapped.ctrl, BTN_PIN, /*activeHigh=*/true);
+
+    // DIR default is input -> DATA_IN should follow injected input.
+    EXPECT_EQ(read32(bus, GPIO_BASE + REG_DATA_IN), 0x00000000u);
+
+    btn.press();
+    EXPECT_EQ(read32(bus, GPIO_BASE + REG_DATA_IN), (1u << BTN_PIN));
+
+    btn.release();
     EXPECT_EQ(read32(bus, GPIO_BASE + REG_DATA_IN), 0x00000000u);
 }
