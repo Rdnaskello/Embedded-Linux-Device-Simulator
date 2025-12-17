@@ -20,6 +20,8 @@ class VirtualLedDevice final : public BaseDevice {
 
     bool isOn() const noexcept { return is_on_; }
     bool state() const noexcept { return is_on_; }
+    std::size_t pin() const noexcept { return pin_; }
+    bool activeHigh() const noexcept { return active_high_; }
 
     // IDevice
     std::uint8_t read(std::uint32_t /*offset*/) override { return 0; }
