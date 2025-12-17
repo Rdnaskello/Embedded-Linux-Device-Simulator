@@ -23,6 +23,7 @@ void printGeneralHelp() {
     std::cout << "  elsim help run\n";
     std::cout << "  elsim run --config examples/board-examples/minimal-board.yaml --dry-run\n";
     std::cout << "  elsim list-boards --path examples/board-examples\n";
+    std::cout << "  monitor     Watch GPIO/LED state (one-shot or periodic).\n";
 }
 
 void printRunHelp() {
@@ -63,6 +64,7 @@ void printHelpHelp() {
     std::cout << "  run\n";
     std::cout << "  list-boards\n";
     std::cout << "  help\n";
+    std::cout << "  monitor\n";
 }
 
 }  // namespace
@@ -85,6 +87,16 @@ int HelpCommand::execute(const std::vector<std::string>& args) {
     }
     if (cmd == "help") {
         printHelpHelp();
+        return 0;
+    }
+    if (cmd == "monitor") {
+        // For now: keep consistent with MonitorCommand::printHelp()
+        std::cout << "elsim monitor\n\n";
+        std::cout << "Shows GPIO/LED state (one-shot or periodically).\n\n";
+        std::cout << "Usage:\n";
+        std::cout
+            << "  elsim monitor --config <path> [--program <path>] [--interval-ms <N>] [--steps <K>] [--once]\n\n";
+        std::cout << "Run: elsim monitor --help\n";
         return 0;
     }
 
