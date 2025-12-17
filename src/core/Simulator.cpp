@@ -9,6 +9,7 @@
 #include "elsim/core/FakeCpu.hpp"
 #include "elsim/core/MemoryBusAdapter.hpp"
 #include "elsim/device/DeviceFactory.hpp"  // знадобиться пізніше в loadBoard
+#include "elsim/device/VirtualLedDevice.hpp"
 
 namespace {
 std::string toLower(std::string s) {
@@ -34,6 +35,7 @@ void Simulator::loadBoard(const BoardDescription& board) {
     cpu_.reset();
     devices_.clear();
     memoryBus_.reset();
+    gpio_.reset();
 
     log_ << "[Simulator] Loading board: " << board.name << "\n";
     log_ << "[Simulator] Description: " << board.description << "\n";
@@ -150,7 +152,8 @@ void Simulator::loadBoard(const BoardDescription& board) {
     }
 
     ::elsim::DeviceFactory::BoardServices services{};
-    services.gpio = std::make_shared<::elsim::core::GpioController>(pinCount);
+    gpio_ = std::make_shared<::elsim::core::GpioController>(pinCount);
+    services.gpio = gpio_;
 
     for (const auto& devDesc : board.devices) {
         log_ << "  - Creating device '" << devDesc.name << "' of type '" << devDesc.type << "' @ 0x" << std::hex
@@ -266,5 +269,18 @@ const ICpu* Simulator::cpu() const noexcept { return cpu_.get(); }
 MemoryBus* Simulator::memoryBus() noexcept { return memoryBus_.get(); }
 
 const MemoryBus* Simulator::memoryBus() const noexcept { return memoryBus_.get(); }
+
+std::shared_ptr<const elsim::core::GpioController> Simulator::gpioController() const noexcept { return gpio_; }
+
+std::vector<const ::elsim::VirtualLedDevice*> Simulator::ledDevices() const {
+    std::vector<const ::elsim::VirtualLedDevice*> out;
+    for (const auto& d : devices_) {
+        if (!d) continue;
+        if (auto* led = dynamic_cast<const ::elsim::VirtualLedDevice*>(d.get())) {
+            out.push_back(led);
+        }
+    }
+    return out;
+}
 
 }  // namespace elsim::core

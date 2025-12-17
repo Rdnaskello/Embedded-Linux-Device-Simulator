@@ -12,19 +12,19 @@ namespace elsim {
 
 class VirtualLedDevice final : public BaseDevice {
    public:
-    // LED is not MMIO-mapped: baseAddress=0, size=0
     VirtualLedDevice(std::string name, std::shared_ptr<elsim::core::GpioController> gpio, std::size_t pin,
                      bool activeHigh = true);
-
     ~VirtualLedDevice() override;
 
     bool isOn() const noexcept { return is_on_; }
     bool state() const noexcept { return is_on_; }
 
-    // IDevice
+    std::size_t pin() const noexcept { return pin_; }
+    bool activeHigh() const noexcept { return active_high_; }
+
     std::uint8_t read(std::uint32_t /*offset*/) override { return 0; }
     void write(std::uint32_t /*offset*/, std::uint8_t /*value*/) override {}
-    void tick() override {}  // no timing
+    void tick() override {}
 
    private:
     std::shared_ptr<elsim::core::GpioController> gpio_;
