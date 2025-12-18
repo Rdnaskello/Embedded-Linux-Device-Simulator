@@ -295,4 +295,15 @@ std::vector<const ::elsim::VirtualButtonDevice*> Simulator::buttonDevices() cons
     return out;
 }
 
+std::vector<::elsim::VirtualButtonDevice*> Simulator::buttonDevices() {
+    std::vector<::elsim::VirtualButtonDevice*> out;
+    for (auto& d : devices_) {
+        if (!d) continue;
+        if (auto* btn = dynamic_cast<::elsim::VirtualButtonDevice*>(d.get())) {
+            out.push_back(btn);
+        }
+    }
+    return out;
+}
+
 }  // namespace elsim::core

@@ -49,6 +49,7 @@ class Simulator {
 
     std::shared_ptr<const elsim::core::GpioController> gpioController() const noexcept;
     std::vector<const elsim::VirtualLedDevice*> ledDevices() const;
+    std::vector<elsim::VirtualButtonDevice*> buttonDevices();
     std::vector<const elsim::VirtualButtonDevice*> buttonDevices() const;
 
    private:
