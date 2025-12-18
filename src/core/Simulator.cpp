@@ -9,6 +9,7 @@
 #include "elsim/core/FakeCpu.hpp"
 #include "elsim/core/MemoryBusAdapter.hpp"
 #include "elsim/device/DeviceFactory.hpp"  // знадобиться пізніше в loadBoard
+#include "elsim/device/VirtualButtonDevice.hpp"
 #include "elsim/device/VirtualLedDevice.hpp"
 
 namespace {
@@ -278,6 +279,28 @@ std::vector<const ::elsim::VirtualLedDevice*> Simulator::ledDevices() const {
         if (!d) continue;
         if (auto* led = dynamic_cast<const ::elsim::VirtualLedDevice*>(d.get())) {
             out.push_back(led);
+        }
+    }
+    return out;
+}
+
+std::vector<const ::elsim::VirtualButtonDevice*> Simulator::buttonDevices() const {
+    std::vector<const ::elsim::VirtualButtonDevice*> out;
+    for (const auto& d : devices_) {
+        if (!d) continue;
+        if (auto* btn = dynamic_cast<const ::elsim::VirtualButtonDevice*>(d.get())) {
+            out.push_back(btn);
+        }
+    }
+    return out;
+}
+
+std::vector<::elsim::VirtualButtonDevice*> Simulator::buttonDevices() {
+    std::vector<::elsim::VirtualButtonDevice*> out;
+    for (auto& d : devices_) {
+        if (!d) continue;
+        if (auto* btn = dynamic_cast<::elsim::VirtualButtonDevice*>(d.get())) {
+            out.push_back(btn);
         }
     }
     return out;

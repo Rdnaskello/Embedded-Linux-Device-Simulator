@@ -23,6 +23,7 @@ void printGeneralHelp() {
     std::cout << "  elsim help run\n";
     std::cout << "  elsim run --config examples/board-examples/minimal-board.yaml --dry-run\n";
     std::cout << "  elsim list-boards --path examples/board-examples\n";
+    std::cout << "  press       Press a virtual button (inject GPIO input).\n";
     std::cout << "  monitor     Watch GPIO/LED state (one-shot or periodic).\n";
 }
 
@@ -65,6 +66,7 @@ void printHelpHelp() {
     std::cout << "  list-boards\n";
     std::cout << "  help\n";
     std::cout << "  monitor\n";
+    std::cout << "  press\n";
 }
 
 }  // namespace
@@ -97,6 +99,15 @@ int HelpCommand::execute(const std::vector<std::string>& args) {
         std::cout
             << "  elsim monitor --config <path> [--program <path>] [--interval-ms <N>] [--steps <K>] [--once]\n\n";
         std::cout << "Run: elsim monitor --help\n";
+        return 0;
+    }
+    if (cmd == "press") {
+        std::cout << "elsim press\n\n";
+        std::cout << "Presses a virtual button from board.yaml during simulation.\n\n";
+        std::cout << "Usage:\n";
+        std::cout << "  elsim press --config <path> --button <name> [--program <path>] [--hold-ms <N>] [--steps <K>] "
+                     "[--repeat <R>]\n\n";
+        std::cout << "Run: elsim press --help\n";
         return 0;
     }
 
