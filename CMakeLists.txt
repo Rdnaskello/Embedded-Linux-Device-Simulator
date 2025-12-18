@@ -177,6 +177,7 @@ add_executable(elsim
     src/cli/commands/HelpCommand.cpp
     src/cli/commands/MonitorCommand.cpp
     src/cli/commands/PressCommand.cpp
+    src/cli/monitor/MonitorRenderers.cpp
 )
 
 target_link_libraries(elsim

@@ -92,12 +92,11 @@ int HelpCommand::execute(const std::vector<std::string>& args) {
         return 0;
     }
     if (cmd == "monitor") {
-        // For now: keep consistent with MonitorCommand::printHelp()
         std::cout << "elsim monitor\n\n";
         std::cout << "Shows GPIO/LED state (one-shot or periodically).\n\n";
         std::cout << "Usage:\n";
-        std::cout
-            << "  elsim monitor --config <path> [--program <path>] [--interval-ms <N>] [--steps <K>] [--once]\n\n";
+        std::cout << "  elsim monitor --config <path> [--program <path>] [--interval-ms <N>] [--steps <K>] [--once] "
+                     "[--format <text|json>]\n\n";
         std::cout << "Run: elsim monitor --help\n";
         return 0;
     }
