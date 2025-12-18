@@ -6,6 +6,7 @@
 #include "commands/HelpCommand.hpp"
 #include "commands/ListBoardsCommand.hpp"
 #include "commands/MonitorCommand.hpp"
+#include "commands/PressCommand.hpp"
 #include "commands/RunCommand.hpp"
 
 namespace elsim::cli {
@@ -60,6 +61,12 @@ int CliApp::run(const std::vector<std::string>& args) {
 
     if (first == "monitor") {
         MonitorCommand cmd;
+        std::vector<std::string> subargs(args.begin() + 2, args.end());
+        return cmd.execute(subargs);
+    }
+
+    if (first == "press") {
+        PressCommand cmd;
         std::vector<std::string> subargs(args.begin() + 2, args.end());
         return cmd.execute(subargs);
     }
