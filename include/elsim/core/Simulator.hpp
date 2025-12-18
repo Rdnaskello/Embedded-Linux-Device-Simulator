@@ -13,7 +13,8 @@
 
 namespace elsim {
 class VirtualLedDevice;
-}
+class VirtualButtonDevice;
+}  // namespace elsim
 
 namespace elsim::core {
 
@@ -48,6 +49,7 @@ class Simulator {
 
     std::shared_ptr<const elsim::core::GpioController> gpioController() const noexcept;
     std::vector<const elsim::VirtualLedDevice*> ledDevices() const;
+    std::vector<const elsim::VirtualButtonDevice*> buttonDevices() const;
 
    private:
     // Логування
