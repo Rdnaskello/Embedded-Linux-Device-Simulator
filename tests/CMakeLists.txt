@@ -106,3 +106,28 @@ target_compile_definitions(board_config_parser_gpio_led_button_tests
 )
 
 gtest_discover_tests(board_config_parser_gpio_led_button_tests)
+
+# GPIO CLI E2E smoke test (TASK-10.5)
+add_executable(gpio_cli_e2e_smoke_tests
+    test_gpio_cli_e2e_smoke.cpp
+    ../src/cli/monitor/MonitorRenderers.cpp
+)
+
+target_link_libraries(gpio_cli_e2e_smoke_tests
+    PRIVATE
+        elsim_core
+        GTest::gtest_main
+)
+
+target_compile_definitions(gpio_cli_e2e_smoke_tests
+    PRIVATE
+        ELSIM_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+)
+
+target_include_directories(gpio_cli_e2e_smoke_tests
+    PRIVATE
+        ${CMAKE_SOURCE_DIR}
+)
+
+
+gtest_discover_tests(gpio_cli_e2e_smoke_tests)
