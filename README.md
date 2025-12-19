@@ -6,9 +6,10 @@ Designed for testing, prototyping, automation, and validating device interaction
 
 ---
 
-## Features in v0.2
+## Features in v0.3
 
-ELSIM `v0.2` extends the initial simulator prototype with a minimal CPU execution model and a program loader.
+ELSIM `v0.3` adds a complete GPIO subsystem (MMIO + core model + Virtual LED/Button) and a subcommand-based CLI workflow (`run`, `monitor`, `press`, `list-boards`).
+
 
 - **Core architecture**
   - `Simulator` orchestration (CPU + memory bus + devices)
@@ -44,11 +45,14 @@ ELSIM `v0.2` extends the initial simulator prototype with a minimal CPU executio
   - Automatic MMIO mapping for UART and Timer
 
 - **CLI**
-  - `elsim` executable with:
-    - `--config <path>` – load board configuration from YAML
-    - `--program <path>` – load `elsim-bin` program into RAM and start CPU execution
-    - `--dry-run` – validate config and construct simulator without running it
-    - `--log-level <DEBUG|INFO|WARN|ERROR>` – control logging verbosity
+  - `elsim` executable with subcommands:
+    - `run --config <path> [--program <path>] [--dry-run] [--log-level <trace|debug|info|warn|error|off>]` – start simulator (legacy-compatible)
+    - `monitor --config <path> [--program <path>] [--once] [--interval-ms <N>] [--steps <K>] [--format <text|json>]` – observe GPIO/LED state (text or JSON; NDJSON in streaming mode)
+    - `press --config <path> --button <name> [--program <path>] [--hold-ms <N>] [--steps <K>] [--repeat <R>]` – press a virtual button (inject GPIO input)
+    - `list-boards [--path <dir>] [--recursive] [--all]` – list available board YAML examples
+    - `help [command]` – show general or per-command help
+  - Backward compatibility:
+    - `elsim --config ...` behaves like `elsim run --config ...`
 
 - **Examples & tests**
   - Smoke tests for MemoryBus, devices, simulator wiring
@@ -74,8 +78,10 @@ From the `build/` directory:
 ### **1. Validate a minimal board configuration**
 
 ```bash
-./elsim --dry-run --config ../examples/board-examples/minimal-board.yaml
+./elsim run --dry-run --config ../examples/board-examples/minimal-board.yaml
 ```
+Note: `elsim --config ...` is backward-compatible with `elsim run --config ...`.
+
 ### **2. Run core smoke tests**
 
 Still in `build/`:
@@ -93,9 +99,34 @@ Still in `build/`:
 ```
 ### **4. Run Fake CPU demo program**
 ```bash
-./elsim --config ../examples/board-examples/hello-board.yaml --program ../examples/hello.elsim-bin --log-level INFO
+./elsim run \
+  --config ../examples/board-examples/hello-board.yaml \
+  --program ../examples/hello.elsim-bin \
+  --log-level info
 ```
-
+### **5. Monitor GPIO / LED state (v0.3)**
+**One-shot snapshot (pretty JSON)**
+```bash
+./elsim monitor --once --format json \
+  --config ../examples/board-examples/gpio-blinky-board.yaml
+```
+**Live stream (NDJSON, one JSON per line)**
+```bash
+./elsim monitor --format json --interval-ms 200 \
+  --config ../examples/board-examples/gpio-blinky-board.yaml
+```
+### **6. Press a virtual button (GPIO input injection)**
+```bash
+./elsim press \
+  --config ../examples/board-examples/gpio-led-button-board.yaml \
+  --button btn1 \
+  --hold-ms 100 \
+  --steps 100
+```
+### **7. List available board examples**
+```bash
+./elsim list-boards --path ../examples/board-examples
+```
 ---
 
 ### **Project Structure**

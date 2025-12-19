@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(EmbeddedLinuxDeviceSimulator VERSION 0.2.0 LANGUAGES CXX)
+project(EmbeddedLinuxDeviceSimulator VERSION 0.3.0 LANGUAGES CXX)
 # --- Project version header (generated) ---
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/include/elsim/Version.hpp.in
@@ -183,6 +183,12 @@ add_executable(elsim
 target_link_libraries(elsim
     PRIVATE
         elsim_core
+)
+
+# Make default paths stable regardless of cwd (repo root vs build/)
+target_compile_definitions(elsim
+    PRIVATE
+        ELSIM_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
 )
 
 target_compile_features(elsim PRIVATE cxx_std_20)
