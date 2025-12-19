@@ -185,6 +185,12 @@ target_link_libraries(elsim
         elsim_core
 )
 
+# Make default paths stable regardless of cwd (repo root vs build/)
+target_compile_definitions(elsim
+    PRIVATE
+        ELSIM_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+)
+
 target_compile_features(elsim PRIVATE cxx_std_20)
 
 # === Unit tests for FakeCPU core (TASK-6.6) ===

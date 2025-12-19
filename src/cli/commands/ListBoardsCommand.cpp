@@ -81,7 +81,12 @@ void ListBoardsCommand::printHelp() {
 }
 
 int ListBoardsCommand::execute(const std::vector<std::string>& args) {
-    fs::path dir = fs::path{"examples/board-examples"};
+    fs::path dir =
+#ifdef ELSIM_SOURCE_DIR
+        fs::path{ELSIM_SOURCE_DIR} / "examples/board-examples";
+#else
+        fs::path{"examples/board-examples"};
+#endif
     bool recursive = false;
     bool showAll = false;
 
