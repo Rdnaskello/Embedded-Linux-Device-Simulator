@@ -104,7 +104,29 @@ Still in `build/`:
   --program ../examples/hello.elsim-bin \
   --log-level info
 ```
-
+### **5. Monitor GPIO / LED state (v0.3)**
+**One-shot snapshot (pretty JSON)**
+```bash
+./elsim monitor --once --format json \
+  --config ../examples/board-examples/gpio-blinky-board.yaml
+```
+**Live stream (NDJSON, one JSON per line)**
+```bash
+./elsim monitor --format json --interval-ms 200 \
+  --config ../examples/board-examples/gpio-blinky-board.yaml
+```
+### **6. Press a virtual button (GPIO input injection)**
+```bash
+./elsim press \
+  --config ../examples/board-examples/gpio-led-button-board.yaml \
+  --button btn1 \
+  --hold-ms 100 \
+  --steps 100
+```
+### **7. List available board examples**
+```bash
+./elsim list-boards --path ../examples/board-examples
+```
 ---
 
 ### **Project Structure**
