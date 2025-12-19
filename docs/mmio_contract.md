@@ -17,7 +17,7 @@ This contract describes:
 
   offset = address - base
 
-- If an address falls into a mapped device range, MemoryBus routes the access to the device. :contentReference[oaicite:0]{index=0}
+- If an address falls into a mapped device range, MemoryBus routes the access to the device.
 
 ## Access sizes
 
@@ -36,11 +36,11 @@ This contract describes:
 
 - Since the bus provides only `read8/write8`, endianness is not defined by the bus.
 - For multi-byte registers, **devices must define how bytes are laid out**.
-- The current convention used by existing devices is **little-endian byte layout** for multi-byte values (example: Timer COUNTER is split into 4 bytes). :contentReference[oaicite:1]{index=1}
+- The current convention used by existing devices is **little-endian byte layout** for multi-byte values (example: Timer COUNTER is split into 4 bytes). 
 
 ## Unknown offsets and invalid operations
 
-MemoryBus does NOT validate device register offsets. It simply routes the access to the mapped device. :contentReference[oaicite:2]{index=2}
+MemoryBus does NOT validate device register offsets. It simply routes the access to the mapped device. 
 
 Therefore, each MMIO device MUST:
 - define which offsets are supported
@@ -56,12 +56,12 @@ On invalid/disallowed operations, devices should:
 - for invalid writes: ignore the write (optionally log WARN)
 
 This matches the current behavior of existing devices:
-- Timer invalid offset -> WARN and return 0xFF / ignore write. :contentReference[oaicite:3]{index=3}
-- UART unsupported read -> WARN and return 0x00; unsupported write is ignored to avoid log spam. :contentReference[oaicite:4]{index=4}
+- Timer invalid offset -> WARN and return 0xFF / ignore write.
+- UART unsupported read -> WARN and return 0x00; unsupported write is ignored to avoid log spam. 
 
 ## RAM out-of-range vs MMIO invalid offset
 
-- Access outside RAM range when no device is mapped is a hard error (throws out_of_range). :contentReference[oaicite:5]{index=5}
+- Access outside RAM range when no device is mapped is a hard error (throws out_of_range). 
 - Access to a mapped device with an invalid offset is handled by the device using the rules above (warn + default/ignore).
 
 ## Minimal negative tests

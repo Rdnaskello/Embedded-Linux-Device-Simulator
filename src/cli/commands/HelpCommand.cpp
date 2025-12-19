@@ -11,20 +11,24 @@ void printGeneralHelp() {
     std::cout << "elsim\n\n";
     std::cout << "Usage:\n";
     std::cout << "  elsim <command> [options]\n\n";
+
     std::cout << "Commands:\n";
-    std::cout << "  run         Start simulator (legacy mode).\n";
+    std::cout << "  run         Start simulator (legacy-compatible).\n";
     std::cout << "  list-boards List available example board YAML files.\n";
+    std::cout << "  monitor     Watch GPIO/LED state (one-shot or periodic).\n";
+    std::cout << "  press       Press a virtual button (inject GPIO input).\n";
     std::cout << "  help        Show help (general or per-command).\n\n";
+
     std::cout << "Aliases:\n";
     std::cout << "  elsim --help            == elsim help\n";
     std::cout << "  elsim --config ...      == elsim run --config ...   (backward-compatible)\n\n";
+
     std::cout << "Examples:\n";
     std::cout << "  elsim help\n";
-    std::cout << "  elsim help run\n";
+    std::cout << "  elsim help monitor\n";
     std::cout << "  elsim run --config examples/board-examples/minimal-board.yaml --dry-run\n";
+    std::cout << "  elsim monitor --once --format json --config examples/board-examples/gpio-blinky-board.yaml\n";
     std::cout << "  elsim list-boards --path examples/board-examples\n";
-    std::cout << "  press       Press a virtual button (inject GPIO input).\n";
-    std::cout << "  monitor     Watch GPIO/LED state (one-shot or periodic).\n";
 }
 
 void printRunHelp() {
@@ -46,14 +50,15 @@ void printRunHelp() {
 void printListBoardsHelp() {
     std::cout << "elsim list-boards\n\n";
     std::cout << "Lists board YAML files in a directory.\n\n";
+
     std::cout << "Usage:\n";
-    std::cout << "  elsim list-boards [--path <dir>] [--recursive]\n\n";
+    std::cout << "  elsim list-boards [--path <dir>] [--recursive] [--all]\n\n";
+
     std::cout << "Options:\n";
     std::cout << "  --path <dir>     Optional. Directory to scan (default: examples/board-examples).\n";
     std::cout << "  --recursive      Optional. Scan subdirectories recursively.\n";
-    std::cout << "  --help           Show this help.\n";
-    std::cout << "  elsim list-boards [--path <dir>] [--recursive] [--all]\n\n";
     std::cout << "  --all            Optional. Include test/invalid YAML files too.\n";
+    std::cout << "  --help           Show this help.\n";
 }
 
 void printHelpHelp() {
