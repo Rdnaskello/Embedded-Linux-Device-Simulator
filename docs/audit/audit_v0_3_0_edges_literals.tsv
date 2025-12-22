@@ -1,0 +1,8 @@
+CMakeLists.txt	include/elsim/Version.hpp.in	DIRECT_USE_LITERAL
+examples/program_loader_smoke_test.cpp	examples/test_program.elsim-bin	CO_EXAMPLE
+src/cli/commands/HelpCommand.cpp	examples/board-examples/gpio-blinky-board.yaml	DIRECT_USE_LITERAL
+src/cli/commands/HelpCommand.cpp	examples/board-examples/minimal-board.yaml	DIRECT_USE_LITERAL
+tests/test_board_config_parser_gpio_led_button.cpp	examples/board-examples/invalid-duplicate-pin.yaml	CO_TEST
+tests/test_board_config_parser_gpio_led_button.cpp	examples/board-examples/invalid-led-without-gpio.yaml	CO_TEST
+tests/test_board_config_parser_gpio_led_button.cpp	examples/board-examples/invalid-pin-out-of-range.yaml	CO_TEST
+tests/test_gpio_cli_e2e_smoke.cpp	examples/board-examples/gpio-led-button-board.yaml	CO_TEST
